@@ -1,0 +1,172 @@
+[
+  {
+    "id": "intro",
+    "lines": [
+      {
+        "say": "Yo, what's up guys? I'm Hark's AI.",
+        "tts": "Yo, what's up guys? I'm Hark's A I."
+      },
+      {
+        "say": "Hark is a Software Engineer at SSW. The real Hark is busy being the High Priest of Vibe Coders.",
+        "tts": "Hark is a Software Engineer at S S W. The real Hark is busy being the High Priest of Vibe Coders."
+      },
+      {
+        "say": "Today I'll show you how Claude Code and ElevenLabs can clone your voice, so your done videos make themselves.",
+        "tts": "Today I'll show you how Claude Code and ElevenLabs can clone your voice, so your done videos make themselves."
+      },
+      {
+        "say": "Let's jump in."
+      }
+    ]
+  },
+  {
+    "id": "result",
+    "lines": [
+      {
+        "say": "Here's what you get. A full SSW done video, made from one prompt, in your own voice.",
+        "tts": "Here's what you get. A full S S W done video, made from one prompt, in your own voice."
+      }
+    ]
+  },
+  {
+    "id": "account",
+    "lines": [
+      {
+        "say": "Step one. Go to elevenlabs.io and create an account.",
+        "tts": "Step one. Go to elevenlabs dot io and create an account."
+      },
+      {
+        "say": "You can sign up with Google, or just your email."
+      }
+    ]
+  },
+  {
+    "id": "plan",
+    "lines": [
+      {
+        "say": "Step two. Pick a plan.",
+        "tts": "Step two. Pick a plan."
+      },
+      {
+        "say": "The free plan can't clone voices, so go for Starter. It's the cheapest plan with Instant Voice Cloning."
+      },
+      {
+        "say": "It's $6 a month. When Hark signed up, the first month was $1. Basically free vibes.",
+        "tts": "It's six dollars a month. When Hark signed up, the first month was one dollar. Basically free vibes."
+      }
+    ]
+  },
+  {
+    "id": "key",
+    "lines": [
+      {
+        "say": "Step three. Create an API key."
+      },
+      {
+        "say": "In the side panel, go to Developers, then API Keys, and click Create Key."
+      },
+      {
+        "say": "Give it a name you'll remember. Hark called his done-videos, so future Hark knows exactly what it's for.",
+        "tts": "Give it a name you'll remember. Hark called his done videos, so future Hark knows exactly what it's for."
+      }
+    ]
+  },
+  {
+    "id": "privilege",
+    "lines": [
+      {
+        "say": "Now, pro tip. Give the key the least privileges it needs, or your sysadmin is going to get mad at you."
+      },
+      {
+        "say": "For done videos, that's Text to Speech, Voices with write access, Sound Effects, Music Generation, and User. Leave the rest at No Access."
+      },
+      {
+        "say": "Hark gave his full access, for simplicity. Please don't tell his sysadmin."
+      },
+      {
+        "say": "But by the time this video is out, Hark will have given his key least privileges too, because Hark follows best practices. Don't worry, sysadmin."
+      },
+      {
+        "say": "And keep Auto-disable if leaked turned on. If the key ever shows up in a public GitHub repo, ElevenLabs tries to switch it off for you."
+      }
+    ]
+  },
+  {
+    "id": "env",
+    "lines": [
+      {
+        "say": "Step four. Put the key in your terminal."
+      },
+      {
+        "say": "Ask Claude Code to set up a global environment variable called ElevenLabs API key.",
+        "tts": "Ask Claude Code to set up a global environment variable called ElevenLabs A P I key."
+      },
+      {
+        "say": "But don't paste the key into the chat. Claude Code opened the zshrc file, and Hark pasted the key in himself.",
+        "tts": "But don't paste the key into the chat. Claude Code opened the Z S H R C file, and Hark pasted the key in himself."
+      },
+      {
+        "say": "Restart the terminal, and ask Claude Code to check. It confirms the key is set, without printing it.",
+        "tts": "Restart the terminal, and ask Claude Code to check. It confirms the key is set, without printing it."
+      }
+    ]
+  },
+  {
+    "id": "clone",
+    "lines": [
+      {
+        "say": "Step five. Let it cook."
+      },
+      {
+        "say": "Hark gave Claude Code his SSW TV playlist and asked it to clone his voice.",
+        "tts": "Hark gave Claude Code his S S W TV playlist and asked it to clone his voice."
+      },
+      {
+        "say": "It pulled the audio with yt-dlp, kept only the clean bits where Hark is talking, and made the clone with one API call.",
+        "tts": "It pulled the audio with Y T D L P, kept only the clean bits where Hark is talking, and made the clone with one A P I call."
+      },
+      {
+        "say": "And here I am, in Hark's voice library. Isn't it cool?"
+      },
+      {
+        "say": "A fair bit of disclaimer. Only clone your own voice, or one you have permission for."
+      }
+    ]
+  },
+  {
+    "id": "use",
+    "lines": [
+      {
+        "say": "Now, every time a PBI is done, Hark asks Claude Code for a done video.",
+        "tts": "Now, every time a P B I is done, Hark asks Claude Code for a done video."
+      },
+      {
+        "say": "It writes the script in the SSW structure, makes the narration in his voice, and builds the video.",
+        "tts": "It writes the script in the S S W structure, makes the narration in his voice, and builds the video."
+      },
+      {
+        "say": "It's not perfect yet. The first video had no SSW lower thirds and no background music.",
+        "tts": "It's not perfect yet. The first video had no S S W lower thirds and no background music."
+      },
+      {
+        "say": "This one has both, and even the music is made by ElevenLabs."
+      }
+    ]
+  },
+  {
+    "id": "outro",
+    "lines": [
+      {
+        "say": "Quick recap. Make an account, pick Starter, create a named API key with least privileges, set it in your terminal, and let Claude Code clone your voice.",
+        "tts": "Quick recap. Make an account, pick Starter, create a named A P I key with least privileges, set it in your terminal, and let Claude Code clone your voice."
+      },
+      {
+        "say": "If you also want to feel these vibes, go clone your voice."
+      },
+      {
+        "say": "This was Hark's AI, signing off. Cheers!",
+        "tts": "This was Hark's A I, signing off. Cheers!"
+      }
+    ]
+  }
+]

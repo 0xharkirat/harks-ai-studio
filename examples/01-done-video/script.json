@@ -1,0 +1,174 @@
+[
+  {
+    "id": "intro",
+    "lines": [
+      {
+        "say": "Hey guys, I'm Hark's AI.",
+        "tts": "Hey guys, I'm Hark's A I."
+      },
+      {
+        "say": "I'm a voice clone of Hark Singh, Software Engineer at SSW.",
+        "tts": "I'm a voice clone of Hark Singh, Software Engineer at S S W."
+      },
+      {
+        "say": "Hark didn't record this video. Claude Code made it.",
+        "tts": "Hark didn't record this video. Clawd Code made it."
+      }
+    ]
+  },
+  {
+    "id": "overview",
+    "lines": [
+      {
+        "say": "So, the task was simple."
+      },
+      {
+        "say": "Clone Hark's voice with ElevenLabs, so his done videos can come straight out of Claude Code."
+      },
+      {
+        "say": "Hark gave Claude Code one prompt, with links to his YouTube videos."
+      },
+      {
+        "say": "The ElevenLabs API key was already set up, so everything after that happened in the terminal."
+      }
+    ]
+  },
+  {
+    "id": "pain",
+    "lines": [
+      {
+        "say": "Now, let's talk about the pain."
+      },
+      {
+        "say": "A good SSW done video needs a camera, good lighting, a clean shirt, a quiet room, and ideally one take.",
+        "tts": "A good S S W done video needs a camera, good lighting, a clean shirt, a quiet room, and ideally one take."
+      },
+      {
+        "say": "For a small PBI, recording the video can take longer than the fix itself.",
+        "tts": "For a small P B I, recording the video can take longer than the fix itself."
+      },
+      {
+        "say": "So a lot of finished work ships with a screenshot, or with nothing."
+      }
+    ]
+  },
+  {
+    "id": "download",
+    "lines": [
+      {
+        "say": "Let me show you how it was done."
+      },
+      {
+        "say": "First, Claude Code used yt-dlp to list Hark's videos on SSW TV, and pulled the audio from five of them.",
+        "tts": "First, Claude Code used Y T D L P to list Hark's videos on S S W TV, and pulled the audio from five of them."
+      }
+    ]
+  },
+  {
+    "id": "clean",
+    "lines": [
+      {
+        "say": "Then it checked which audio is actually clean."
+      },
+      {
+        "say": "It measured the background level in the gaps between words."
+      },
+      {
+        "say": "Two videos had background audio running under Hark's voice, so those were out for training."
+      },
+      {
+        "say": "It also made frame grids of the videos, to make sure only Hark is talking."
+      }
+    ]
+  },
+  {
+    "id": "clips",
+    "lines": [
+      {
+        "say": "From the Playwright and Fumadocs videos, it cut four clean chunks.",
+        "tts": "From the Playwright and Fuma docs videos, it cut four clean chunks."
+      },
+      {
+        "say": "About four minutes of just Hark, trimmed and levelled."
+      }
+    ]
+  },
+  {
+    "id": "pace",
+    "lines": [
+      {
+        "say": "For pacing, it transcribed Hark's unreleased CMS video with Whisper.",
+        "tts": "For pacing, it transcribed Hark's unreleased C M S video with Whisper."
+      },
+      {
+        "say": "Hark talks at around 130 words a minute, with short pauses between sentences.",
+        "tts": "Hark talks at around a hundred and thirty words a minute, with short pauses between sentences."
+      },
+      {
+        "say": "So this narration is tuned to that pace."
+      }
+    ]
+  },
+  {
+    "id": "clone",
+    "lines": [
+      {
+        "say": "Then, one API call to ElevenLabs Instant Voice Cloning."
+      },
+      {
+        "say": "A few seconds later, a voice called Hark's AI was ready.",
+        "tts": "A few seconds later, a voice called Hark's A I was ready."
+      },
+      {
+        "say": "A speaker check scored the clone 0.95 against Hark's real voice. A different voice scored 0.67.",
+        "tts": "A speaker check scored the clone zero point nine five against Hark's real voice. A different voice scored zero point six seven."
+      }
+    ]
+  },
+  {
+    "id": "build",
+    "lines": [
+      {
+        "say": "Last, Claude Code wrote this script in the SSW done video structure.",
+        "tts": "Last, Claude Code wrote this script in the S S W done video structure."
+      },
+      {
+        "say": "It generated the narration with the cloned voice and built the video with Remotion."
+      },
+      {
+        "say": "So the thing you're watching is the demo."
+      }
+    ]
+  },
+  {
+    "id": "value",
+    "lines": [
+      {
+        "say": "So now, after Hark finishes a PBI with Claude Code, the done video is one more prompt.",
+        "tts": "So now, after Hark finishes a P B I with Claude Code, the done video is one more prompt."
+      },
+      {
+        "say": "No camera, no retakes."
+      },
+      {
+        "say": "And every video says up front that it's Hark's AI, so nobody gets fooled.",
+        "tts": "And every video says up front that it's Hark's A I, so nobody gets fooled."
+      }
+    ]
+  },
+  {
+    "id": "outro",
+    "lines": [
+      {
+        "say": "Quick recap."
+      },
+      {
+        "say": "Five videos in, four clean minutes picked, one ElevenLabs voice out, and a done video from Claude Code."
+      },
+      {
+        "say": "This was Hark's AI, signing off.",
+        "tts": "This was Hark's A I, signing off."
+      }
+    ]
+  }
+]

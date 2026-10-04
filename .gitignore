@@ -1,0 +1,21 @@
+# Machine-local tooling and caches
+node_modules/
+.venv/
+.cache/
+.DS_Store
+
+# Raw voice: rebuild with scripts/fetch-voice.sh from assets/voice/sources.json.
+# Never commit it: clean solo clips are everything someone needs to clone a voice.
+assets/voice/**/*.mp3
+assets/voice/.download/
+
+# Personal: the portrait, and everything a video produces
+assets/brand/
+videos/
+voice-tests/
+
+# Regenerable from the mp3 next to it
+assets/music/*.wav
+
+# Template build output
+template/src/config.json

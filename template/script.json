@@ -1,0 +1,24 @@
+[
+  {"id": "intro", "lines": [
+    {"say": "Hey guys, I'm {{ai_name}}.", "tts": "Hey guys, I'm {{ai_name_tts}}."},
+    {"say": "{{person_first}} is a {{title}}.", "tts": "{{person_first}} is a {{title_tts}}."},
+    {"say": "TODO: one line on what this PBI delivers."}
+  ]},
+  {"id": "overview", "lines": [
+    {"say": "TODO: the PBI in one or two sentences, from its title and acceptance criteria."},
+    {"say": "TODO: who asked for it, and what done looks like."}
+  ]},
+  {"id": "pain", "lines": [
+    {"say": "Now, let's talk about the pain."},
+    {"say": "TODO: what was broken or slow before, as the user saw it."}
+  ]},
+  {"id": "demo", "lines": [
+    {"say": "Let me show you how it works now."},
+    {"say": "TODO: walk the real flow, one action per line."},
+    {"say": "TODO: tie the result back to the pain."}
+  ]},
+  {"id": "outro", "lines": [
+    {"say": "Quick recap. TODO: one line on what changed."},
+    {"say": "This was {{ai_name}}, signing off.", "tts": "This was {{ai_name_tts}}, signing off."}
+  ]}
+]

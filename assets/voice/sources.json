@@ -1,0 +1,20 @@
+{
+  "_about": "Where every voice clip comes from. scripts/fetch-voice.sh rebuilds them, so the raw audio never has to live in git. Only public videos are listed.",
+  "train": {
+    "filter": "highpass=f=70,silenceremove=stop_periods=-1:stop_duration=0.7:stop_threshold=-50dB:stop_silence=0.35,afade=t=in:d=0.05,loudnorm=I=-18:TP=-2:LRA=11",
+    "clips": [
+      {"file": "hark_playwright_a.mp3", "video": "EUhQ1J-69KY", "start": 120, "end": 205},
+      {"file": "hark_playwright_b.mp3", "video": "EUhQ1J-69KY", "start": 770, "end": 832},
+      {"file": "hark_fumadocs_a.mp3", "video": "V_dDmX7O52k", "start": 40, "end": 100},
+      {"file": "hark_fumadocs_b.mp3", "video": "V_dDmX7O52k", "start": 330, "end": 380}
+    ]
+  },
+  "reference": {
+    "filter": "highpass=f=70,loudnorm=I=-18:TP=-2:LRA=11",
+    "clips": [
+      {"file": "reference/real_playwright_300.mp3", "video": "EUhQ1J-69KY", "start": 300, "end": 345},
+      {"file": "reference/real_vibe_140.mp3", "video": "buaXi8Hh420", "start": 140, "end": 185},
+      {"file": "reference/real_fuma_200_music.mp3", "video": "V_dDmX7O52k", "start": 200, "end": 240}
+    ]
+  }
+}
