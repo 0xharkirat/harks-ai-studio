@@ -9,7 +9,8 @@ import 'dart:io';
 // Then run layout.dart as usual.
 
 final studio = File.fromUri(Platform.script).parent.parent.path;
-final recipe = jsonDecode(File('$studio/voice.json').readAsStringSync()) as Map;
+// The project's snapshot of voice.json wins, so an old video keeps the recipe it was made with.
+final recipe = jsonDecode((File('src/config.json').existsSync() ? File('src/config.json') : File('$studio/voice.json')).readAsStringSync()) as Map;
 const pad = 0.45; // silence on each side of a fresh clip, about Hark's sentence pause once joined
 
 String keyOf(Map l) => (l['tts'] ?? l['say']) as String;
@@ -26,11 +27,6 @@ void ffmpeg(List<String> args) {
 
 void split() {
   final script = jsonDecode(File('script.json').readAsStringSync()) as List;
-  final todo = [for (final s in script) for (final l in s['lines'] as List) if ('${l['say']} ${l['tts'] ?? ''}'.contains('TODO')) '${s['id']}: ${l['say']}'];
-  if (todo.isNotEmpty) {
-    stderr.writeln('script.json still has TODO lines, so nothing was voiced (no credits spent):\n  ${todo.join('\n  ')}');
-    exit(1);
-  }
   final timings = jsonDecode(File('src/timings.json').readAsStringSync()) as List;
   Directory('public/audio/lines').createSync(recursive: true);
   final index = <String, dynamic>{};
@@ -79,6 +75,11 @@ Future<Map> voiceLine(String text, String? previous, String? next, String file) 
 
 Future<void> build() async {
   final script = jsonDecode(File('script.json').readAsStringSync()) as List;
+  final todo = [for (final s in script) for (final l in s['lines'] as List) if ('${l['say']} ${l['tts'] ?? ''}'.contains('TODO')) '${s['id']}: ${l['say']}'];
+  if (todo.isNotEmpty) {
+    stderr.writeln('script.json still has TODO lines, so nothing was voiced (no credits spent):\n  ${todo.join('\n  ')}');
+    exit(1);
+  }
   final index = jsonDecode(File('src/lines.json').readAsStringSync()) as Map<String, dynamic>;
   final all = [for (final s in script) for (final l in s['lines'] as List) l];
   final out = [];

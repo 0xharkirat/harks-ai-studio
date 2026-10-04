@@ -1,3 +1,5 @@
+// Reference only: the scenes of video 02, kept to show every component in use.
+// It imports ./ui like a project does; copy pieces into a project made by scripts/new-video.sh.
 import React from 'react';
 import {AbsoluteFill, Img, interpolate, staticFile, useCurrentFrame} from 'remotion';
 import {Appear, Backdrop, Between, BrowserShot, c, Chip, Header, LowerThird, mono, PermissionPicker, PermRow, sans, SswTag, Terminal, useIn} from './ui';

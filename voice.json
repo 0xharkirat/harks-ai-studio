@@ -7,7 +7,8 @@
     "title": "Software Engineer at SSW",
     "title_tts": "Software Engineer at S S W",
     "short_title": "SSW Software Engineer",
-    "portrait": "assets/brand/hark.jpg"
+    "portrait": "assets/brand/hark.jpg",
+    "voice_profile": "~/VOICE.md#on-video"
   },
   "voice_id": "EtyQYZi13hBpNi6qJGxp",
   "voice_name": "Hark's AI",

@@ -29,6 +29,7 @@ const Fade: React.FC<{frames: number; children: React.ReactNode}> = ({frames, ch
 // Lives outside the scene Sequences so the voice meter reads the global frame.
 const CameraBox: React.FC = () => {
   const f = useCurrentFrame();
+  if (layout.scenes.length === 0) return null;
   const first = layout.scenes[0];
   const last = layout.scenes[layout.scenes.length - 1];
   const o = interpolate(f, [first.frames, first.frames + 10, last.from - 8, last.from], [0, 1, 1, 0], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'});

@@ -12,7 +12,8 @@ import 'dart:io';
 // Seeds live in src/seeds.json: same text + same seed + same recipe gives back the same take.
 
 final studio = File.fromUri(Platform.script).parent.parent.path;
-final recipe = jsonDecode(File('$studio/voice.json').readAsStringSync()) as Map;
+// The project's snapshot of voice.json wins, so an old video keeps the recipe it was made with.
+final recipe = jsonDecode((File('src/config.json').existsSync() ? File('src/config.json') : File('$studio/voice.json')).readAsStringSync()) as Map;
 const stitchMaxAge = Duration(minutes: 110); // ElevenLabs keeps request ids for 2 hours
 
 String ttsOf(Map s) => (s['lines'] as List).map((l) => l['tts'] ?? l['say']).join(' ');
@@ -123,7 +124,10 @@ Future<void> main(List<String> args) async {
     for (var k = 1; k < c.length; k++) {
       final guess = sceneLines[k].first['start'] as double;
       gaps.sort((a, b) => ((a[0] + a[1]) / 2 - guess).abs().compareTo(((b[0] + b[1]) / 2 - guess).abs()));
-      cuts.add((gaps.first[0] + gaps.first[1]) / 2);
+      final near = gaps.isNotEmpty && ((gaps.first[0] + gaps.first[1]) / 2 - guess).abs() <= 1.2;
+      // No real pause near the boundary: fall back to the alignment and say so, rather than cut mid-word far away.
+      if (!near) stderr.writeln('warning: no silence near the start of ${c[k]['id']}; cutting at the alignment instead');
+      cuts.add(near ? (gaps.first[0] + gaps.first[1]) / 2 : ((sceneLines[k - 1].last['end'] as double) + guess) / 2);
     }
     cuts.add(probe(chunkFile));
     for (var k = 0; k < c.length; k++) {

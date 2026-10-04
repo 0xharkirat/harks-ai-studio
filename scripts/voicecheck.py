@@ -30,16 +30,20 @@ def embed(y):
     return e / np.linalg.norm(e)
 
 refs = {p.name: embed(load(p)) for p in sorted((STUDIO / 'assets/voice/reference').glob('*.mp3'))}
+if not refs:
+    sys.exit('No reference clips in assets/voice/reference. Run scripts/fetch-voice.sh first; without them every likeness score is NaN and nothing could fail.')
 
 def score(path):
     y = load(path)
     win = 4 * 16000
-    chunks = [y[i:i + win] for i in range(0, len(y), win) if len(y[i:i + win]) > 2 * 16000]
+    chunks = [y[i:i + win] for i in range(0, len(y), win) if len(y[i:i + win]) > 2 * 16000] or [y]  # short scene: score it whole
     # The accent model scores by cosine; a softmax at scale 30 (its training margin) gives shares.
     scores = torch.stack([acc.classify_batch(torch.tensor(c).unsqueeze(0))[0].squeeze() for c in chunks])
     probs = torch.softmax(scores * 30, -1).mean(0).numpy()
     f0, voiced, _ = librosa.pyin(y, fmin=65, fmax=320, sr=16000, frame_length=1024)
     f0 = f0[voiced & ~np.isnan(f0)]
+    if f0.size == 0:  # silent or unvoiced clip: report it instead of crashing
+        f0 = np.array([np.nan, np.nan])
     e = embed(y)
     match = np.mean([float(e @ r) for name, r in refs.items() if name != Path(path).name])
     return match, probs[idx['indian']], probs[idx['us']], probs[idx['australia']], np.median(f0), np.subtract(*np.percentile(f0, [75, 25]))
@@ -47,4 +51,4 @@ def score(path):
 print(f"{'file':44} {'match':>5} {'indian':>6} {'us':>5} {'aus':>5} {'pitch':>5} {'range':>5}")
 for p in sys.argv[1:]:
     m, ind, us, aus, pitch, rng = score(p)
-    print(f"{Path(p).name[:44]:44} {m:5.2f} {ind:6.2f} {us:5.2f} {aus:5.2f} {pitch:5.0f} {rng:5.0f}")
+    print(f"{Path(p).name:44} {m:5.2f} {ind:6.2f} {us:5.2f} {aus:5.2f} {pitch:5.0f} {rng:5.0f}")

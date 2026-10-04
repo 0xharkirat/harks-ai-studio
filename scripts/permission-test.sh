@@ -6,12 +6,12 @@
 set -u
 key=${TEST_ELEVENLABS_KEY:?set TEST_ELEVENLABS_KEY}
 api=https://api.elevenlabs.io
-voice=EtyQYZi13hBpNi6qJGxp
+voice=$(python3 -c "import json;print(json.load(open('${0:A:h:h}/voice.json'))['voice_id'])")
 tmp=$(mktemp -d)
 pass=0; fail=0
 
 check() { # name, expected (ok|refused), http status, body file
-  local ok=$([[ $3 == 2* ]] && echo ok || echo refused)
+  local ok=$([[ $3 == 2* ]] && echo ok || { [[ $3 == 401 || $3 == 403 ]] && echo refused || echo "error-$3"; })
   local detail=$(head -c 160 $4 | LC_ALL=C tr -d '\n' | LC_ALL=C grep -a -o '"message":"[^"]*"\|"status":"[^"]*"' | head -1)
   if [[ $ok == $2 ]]; then pass=$((pass+1)); print "PASS  $1 -> $3"; else fail=$((fail+1)); print "FAIL  $1 -> $3 (wanted $2) $detail"; fi
 }

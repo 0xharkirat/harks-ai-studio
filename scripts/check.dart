@@ -12,7 +12,8 @@ import 'dart:io';
 //   dart check.dart intro,use  # only these
 
 final studio = File.fromUri(Platform.script).parent.parent.path;
-final gate = (jsonDecode(File('$studio/voice.json').readAsStringSync()) as Map)['gate'] as Map;
+// The project's snapshot of voice.json wins, so an old video keeps the recipe it was made with.
+final gate = (jsonDecode((File('src/config.json').existsSync() ? File('src/config.json') : File('$studio/voice.json')).readAsStringSync()) as Map)['gate'] as Map;
 
 String norm(String s) => s
     .toLowerCase()
@@ -55,15 +56,18 @@ void main(List<String> args) {
   for (final s in scenes) {
     final id = s['id'] as String;
     final want = norm((s['lines'] as List).map((l) => l['say']).join(' ')).split(' ');
-    final got = norm(File('check/$id.txt').readAsStringSync()).split(' ');
-    final misheard = RegExp(r'\b(clod|clot|plot|toad|cloud|cloth|clodcode|clotcode|harp|hart|harts)\b').hasMatch(got.join(' '));
+    final heard = norm(File('check/$id.txt').readAsStringSync());
+    final names = RegExp(r'\b(clod|clot|plot|toad|cloud|cloth|clodcode|clotcode|harp|hart|harts)\b');
+    final misheard = names.hasMatch(heard);
+    // A misheard name is only flagged, so score words as if it were heard right.
+    final got = heard.replaceAllMapped(names, (m) => m[0]!.startsWith('ha') ? 'hark' : 'claude').split(' ');
     final wer = distance(want, got) / want.length;
     final [match, indian, us] = voice['$id.mp3']!;
     final notes = [if (misheard) '⚠ name said differently (captions are still right)'];
     final problems = [
       if (wer >= 0.2) 'words off (${(wer * 100).round()}%)',
       if (us > gate['max_us']) 'American ${(us * 100).round()}%',
-      if (match < gate['min_match']) 'less like Hark (${match.toStringAsFixed(2)})',
+      if (match.isNaN || match < gate['min_match']) 'less like Hark (${match.toStringAsFixed(2)})',
     ];
     if (problems.isNotEmpty) bad.add(id);
     print('${problems.isEmpty ? 'ok ' : 'BAD'} ${id.padRight(10)} match ${match.toStringAsFixed(2)}  indian ${(indian * 100).round()}%  us ${(us * 100).round()}%  ${[...problems, ...notes].join(', ')}');

@@ -18,7 +18,7 @@ void main() {
     scenes.add({
       'id': s['id'],
       'from': (cursor * fps).round(),
-      'frames': (total * fps).round(),
+      'frames': ((cursor + total) * fps).round() - (cursor * fps).round(),
       'audioFrom': ((cursor + lead) * fps).round(),
       'lines': [
         for (final l in s['lines'])

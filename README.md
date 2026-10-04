@@ -22,13 +22,19 @@ On a new Mac (Hark's paths; anyone else can clone anywhere and link it):
 ```sh
 git clone <this repo> ~/Movies/harks-ai-studio
 ln -s ~/Movies/harks-ai-studio ~/.claude/skills/done-video      # dotfiles does this via home/.claude/skills/done-video
-brew install ffmpeg node dart rubberband && pipx install openai-whisper
+brew install ffmpeg node dart uv pipx yt-dlp && pipx install openai-whisper
 cd ~/Movies/harks-ai-studio && uv venv -p 3.11 .venv && VIRTUAL_ENV=.venv uv pip install speechbrain librosa "setuptools<70" "huggingface_hub<0.26"
-echo 'export ELEVENLABS_API_KEY="..."' >> ~/.zshrc.local       # never in git; ~/.zshrc sources it
+open -e ~/.zshrc.local   # paste: export ELEVENLABS_API_KEY="..."  (an editor keeps the key out of shell history; ~/.zshrc sources this file)
+scripts/fetch-voice.sh                                          # rebuilds assets/voice from assets/voice/sources.json
 ```
 
 The voice-check models (SpeechBrain, about 100 MB) and Whisper models download on first use.
-To make it yours, edit `speaker` in `voice.json` (name, title, accent tag, portrait) and put your own clips in `assets/voice`.
+To make it yours:
+
+1. Edit `speaker` in `voice.json`: name, title, portrait, voice profile, and the accent tag in `prefix`.
+2. List 2-4 minutes of your own clean, solo, public videos in `assets/voice/sources.json`, then run `scripts/fetch-voice.sh`.
+3. Run `scripts/clone-voice.sh`; it clones your voice and writes the new `voice_id` into `voice.json`.
+   Only clone your own voice, or one you have permission for.
 
 ## Usage
 
@@ -68,7 +74,7 @@ A done-video key needs only these endpoints (verified 2026-10-04, 9 of 9 checks 
 | Music Generation | Access | Background music |
 | User | Access | Reading the credit balance |
 
-To prove it against a restricted key, run `TEST_ELEVENLABS_KEY=... scripts/permission-test.sh assets/voice/hark_playwright_a.mp3`.
+To prove it against a restricted key, put `export TEST_ELEVENLABS_KEY="..."` in `~/.zshrc.local` (not on the command line, which lands in shell history), then run `scripts/permission-test.sh assets/voice/hark_playwright_a.mp3`.
 It makes every pipeline call, clones and deletes a 10 s test voice, and expects Models and History to be refused.
 
 ## Style that works
@@ -103,9 +109,9 @@ Sound levels live in `sfx` in `ui.tsx` and `MUSIC` in `Video.tsx`.
 | `assets/brand/hark.jpg` | Portrait for intros, outros, and the camera box | Frame from an SSW TV video |
 | `assets/sfx/typewriter_loop.wav` | 6 s loop | ElevenLabs sound effects, `loop: true`: "Soft vintage typewriter typing, quick steady keystrokes, close mic, dry, no bell" |
 | `assets/sfx/mouse_click.wav` | One click | ElevenLabs sound effects: "Single crisp computer mouse click, close mic, dry", trimmed to 0.12 s |
-| `assets/music/minimal_lofi_bed_4min.wav` | 4 min quiet bed, fades out on its own | ElevenLabs music `music_v1`, instrumental: "Very minimal, subtle background music for a calm tech tutorial... 85 BPM" |
+| `assets/music/minimal_lofi_bed_4min.mp3` | 4 min quiet bed, fades out on its own | ElevenLabs music `music_v1`, instrumental: "Very minimal, subtle background music for a calm tech tutorial... 85 BPM" |
 
-Loudness of every `.wav` is normalized to -20 LUFS, so the `volume` values in code stay meaningful.
+The sound effects and music sit near -20 LUFS, so the `volume` values in code stay meaningful.
 For a video longer than 4 min, generate a longer bed (about 900 credits per minute) rather than looping this one.
 
 ## Voice

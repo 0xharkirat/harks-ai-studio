@@ -5,7 +5,7 @@ description: Make a narrated SSW-style done video, or a short tutorial, in the u
 
 # Done video
 
-The studio is this skill's folder (resolve the symlink: `STUDIO=$(cd "$(dirname "$(readlink -f ~/.claude/skills/done-video/SKILL.md)")" && pwd)`).
+The studio is this skill's folder: `STUDIO=$(cd -P ~/.claude/skills/done-video && pwd)`.
 `voice.json` there is the locked recipe and the speaker's identity; never pass voice settings any other way.
 `README.md` there is the reference: Voice, Subtitles, Components, Assets, and the "Tried and dropped" table.
 
@@ -19,7 +19,9 @@ Done when all three pass.
 
 ## 1. Gather the PBI
 
-Read what was actually built: the issue (`gh issue view`), the PR (`gh pr view --comments`), and the commits (`git log --since=<start> --stat`) in the user's repo.
+Read what was actually built: the issue (`gh issue view <n>`), the PR body and diff (`gh pr view <n>`, `gh pr diff <n>`) and its comments (`gh pr view <n> --comments`), and the commits (`git log --since=<start> --stat`).
+Work shipped as a direct commit has no PR; the commit and its diff are then the source.
+Where the feature can run without side effects, run it once for real numbers to quote.
 Ask the user only for what those do not say.
 
 Done when you can state, one sentence each: the pain before, the change, and the demo flow a viewer will see.
@@ -27,7 +29,8 @@ Done when you can state, one sentence each: the pain before, the change, and the
 ## 2. Create the project
 
 From `$STUDIO`: `scripts/new-video.sh NN-short-name`, where NN is the next number in `videos/`.
-It copies the template, fills the speaker's name into `script.json`, and snapshots `voice.json` into `src/config.json`.
+It copies the template, fills the speaker's name into `script.json`, and snapshots `voice.json` into `src/config.json`, which the voice tools then use, so a later recipe change never alters this video.
+It ends by printing `Ready:`; without that line it failed, and it removes the half-built folder itself.
 Run every later command from `videos/NN-short-name/project`.
 
 ## 3. Write the script
@@ -35,11 +38,15 @@ Run every later command from `videos/NN-short-name/project`.
 Replace every `TODO` in `script.json`; the voice tools refuse to spend credits while one remains.
 
 - Follow the [SSW done video](https://www.ssw.com.au/rules/done-video) order: intro, overview, pain, demo (one or more scenes), outro, in 2-5 minutes (about 300-700 words).
-- Write in the speaker's spoken voice from the "On video" section of `~/VOICE.md`.
+- Write in the speaker's spoken voice from `speaker.voice_profile` in `voice.json` (Hark: the "On video" section of `~/VOICE.md`), drafting with the `ai-tells` skill.
+  The `examples/` scripts show structure only; where they differ from the voice profile, the profile wins.
   The AI narrates about the person in third person ("Hark gave Claude Code one prompt") and talks to the viewer as "you".
 - Keep the intro line "I'm <ai_name>" and the sign-off "This was <ai_name>, signing off".
-- `say` is the subtitle text; put spoken spellings in `tts` ("S S W", "P B I", "Y T D L P", money in words).
+- `say` is the subtitle text; put spoken spellings in `tts`: acronyms ("S S W", "P B I", "Y T D L P"), money, percentages, times and years in words, and command names as they are said ("claude budget").
 - One line per sentence or two; each scene starts a new visual.
+- Scene ids are one lowercase word, because each becomes a component name (`demo` -> `Demo`).
+- The narration runs about 145 words a minute, so 300-650 words is 2-4.5 minutes; the music bed is 4 minutes.
+- Add multi-word product names to `TERMS` in `src/captions.ts`, so subtitles never split them.
 
 Done when no `TODO` is left and the script reads aloud in under 5 minutes.
 

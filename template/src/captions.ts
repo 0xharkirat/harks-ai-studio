@@ -59,14 +59,14 @@ const gapCosts = (words: string[]): number[] => {
 const length = (words: string[], a: number, b: number) => words.slice(a, b).join(' ').length;
 
 /** Best legal way to show words[a..b) in one or two lines, or null if none exists. */
-const layoutLines = (words: string[], cost: number[], a: number, b: number): {lines: string[]; cost: number} | null => {
+const layoutLines = (words: string[], cost: number[], a: number, b: number, strict = true): {lines: string[]; cost: number} | null => {
   const whole = words.slice(a, b).join(' ');
   if (whole.length <= LINE) return {lines: [whole], cost: 0};
   let best: {lines: string[]; cost: number} | null = null;
   for (let k = a + 1; k < b; k++) {
     const top = length(words, a, k);
     const bottom = length(words, k, b);
-    if (top > LINE || bottom > LINE || cost[k - 1] >= 1000) continue;
+    if (top > LINE || bottom > LINE || (strict && cost[k - 1] >= 1000)) continue;
     // Break quality first, then balance; prefer a bottom-heavy pyramid.
     const stub = Math.min(top, bottom) < 12 ? 40 : 0; // no one- or two-word lines
     const c = cost[k - 1] * 10 + Math.abs(top - bottom) + (top > bottom ? 6 : 0) + stub;
@@ -76,7 +76,8 @@ const layoutLines = (words: string[], cost: number[], a: number, b: number): {li
 };
 
 /** Split a sentence-level line into cues: dynamic programming over break costs and line layout. */
-const splitCues = (words: string[], cost: number[]): {span: [number, number]; lines: string[]}[] => {
+// Strict first; if a line has no legal break at all (one long name, say), allow the least bad one rather than drop it.
+const splitCues = (words: string[], cost: number[], strict = true): {span: [number, number]; lines: string[]}[] => {
   const n = words.length;
   const best = new Array(n + 1).fill(Infinity);
   const prev = new Array(n + 1).fill(-1);
@@ -85,7 +86,7 @@ const splitCues = (words: string[], cost: number[]): {span: [number, number]; li
   for (let j = 1; j <= n; j++) {
     for (let i = j - 1; i >= 0; i--) {
       if (length(words, i, j) > MAX_CUE) break;
-      const lay = layoutLines(words, cost, i, j);
+      const lay = layoutLines(words, cost, i, j, strict);
       if (!lay) continue;
       const len = length(words, i, j);
       const short = len < 18 && j < n ? (18 - len) * 3 : 0; // avoid flashes of 1-2 words
@@ -97,6 +98,7 @@ const splitCues = (words: string[], cost: number[]): {span: [number, number]; li
       }
     }
   }
+  if (best[n] === Infinity) return strict ? splitCues(words, cost, false) : [{span: [0, n], lines: [words.join(' ')]}];
   const out: {span: [number, number]; lines: string[]}[] = [];
   for (let j = n; j > 0; j = prev[j]) out.unshift({span: [prev[j], j], lines: shape[j]!});
   return out;
