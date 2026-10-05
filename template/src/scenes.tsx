@@ -4,6 +4,7 @@ import config from './config.json';
 import {Appear, at, Backdrop, c, Chip, Header, IntroCard, OutroCard, sans, SswTag, Terminal} from './ui';
 
 const who = config.speaker;
+const nameBar = who.person ? `AI voice of ${who.person}${who.title ? ` · ${who.title}` : ''}` : 'AI voice';
 
 export type SceneProps = {cue: number[]; frames: number};
 
@@ -18,7 +19,7 @@ const PBI = {
 };
 
 export const Intro: React.FC<SceneProps> = ({cue, frames}) => (
-  <IntroCard cue={cue} frames={frames} name={who.ai_name} title={`AI voice clone of ${who.person} · ${who.short_title}`} today={PBI.today} />
+  <IntroCard cue={cue} frames={frames} name={who.ai_name} title={nameBar} today={PBI.today} />
 );
 
 export const Overview: React.FC<SceneProps> = ({cue}) => (

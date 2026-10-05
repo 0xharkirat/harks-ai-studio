@@ -1,0 +1,35 @@
+{
+  "speaker": {
+    "ai_name": "My AI",
+    "ai_name_tts": "My A I",
+    "person": "",
+    "title": "",
+    "portrait": null,
+    "voice_profile": null
+  },
+  "voice_id": "PASTE_YOUR_ELEVENLABS_VOICE_ID",
+  "model_id": "eleven_v4",
+  "prefix": "",
+  "seed": 1729,
+  "output_format": "mp3_44100_128",
+  "voice_settings": {
+    "stability": 0.5,
+    "similarity_boost": 0.85
+  },
+  "chunk_chars": 850,
+  "gate": {
+    "max_us": null,
+    "min_match": null
+  },
+  "voice_sources": null,
+  "_notes": {
+    "where": "Copy this to ~/.config/done-video/config.json and edit it there; that file wins over this one and stays out of the repo.",
+    "speaker": "Only ai_name is needed. person and title add a name bar; portrait (an image path) adds a photo intro and a camera box; voice_profile points at notes on how you talk.",
+    "voice_id": "From the ElevenLabs web app (Voices > your clone > ID), or written by scripts/clone-voice.sh.",
+    "prefix": "Optional audio tag sent before every request, like \"[Indian English accent] \", if your clone drifts toward another accent.",
+    "voice_settings": "eleven_v4 only honours stability and similarity_boost.",
+    "chunk_chars": "Scenes are merged into requests up to this size; very short requests drift more.",
+    "gate": "Optional checks per scene: max_us fails a scene above this US-accent share (0-1), min_match fails it below this likeness to the clips in assets/voice/reference. null skips the check.",
+    "voice_sources": "Optional path to a sources.json listing the public videos your voice clips come from; scripts/fetch-voice.sh rebuilds the clips from it."
+  }
+}

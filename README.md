@@ -57,13 +57,21 @@ The voice-check models (SpeechBrain, about 100 MB) and Whisper download on first
 
 ## Make it yours
 
-The defaults in `voice.json` are the author's.
-Replace them once:
+Everything personal lives in one file outside the repo:
 
-1. Edit `speaker` in `voice.json`: your AI's name, your name and title, the path to your portrait, your voice profile, and the accent tag in `prefix` (for example `[Indian English accent] `).
-2. List 2-4 minutes of your own clean, solo, public videos in `assets/voice/sources.json`, then run `scripts/fetch-voice.sh`.
-3. Run `scripts/clone-voice.sh`. It makes an Instant Voice Clone from those clips and writes the new `voice_id` into `voice.json`.
+```sh
+mkdir -p ~/.config/done-video && cp config.example.json ~/.config/done-video/config.json
+```
 
+The only required change is `voice_id`: copy it from your clone in the ElevenLabs web app.
+The rest is optional, and every field is explained in `_notes` inside the file:
+
+- `speaker.ai_name`, `person`, `title`: what the narrator calls itself, and an optional name bar.
+- `speaker.portrait`: a photo for the intro and a camera box; leave it `null` for a clean title card.
+- `prefix`: an accent tag such as `[Indian English accent] `, if your clone drifts toward another accent.
+- `gate`: per-scene checks for accent drift and likeness, off by default.
+
+No clone yet? List a few minutes of your own clean, solo, public videos in a copy of `assets/voice/sources.example.json`, point `voice_sources` at it, then run `scripts/fetch-voice.sh` and `scripts/clone-voice.sh`.
 Only clone your own voice, or one you have permission to use.
 
 ## Usage
@@ -102,26 +110,27 @@ Give the key only these endpoints; everything else stays on **No Access**:
 | Endpoint | Access | Used for |
 |---|---|---|
 | Text to Speech | Access | Narration |
-| Voices | Write | Creating the clone, listing voices |
-| Sound Effects | Access | Typing and click sounds |
-| Music Generation | Access | Background music |
+| Voices | Write | Creating the clone, listing voices (Read is enough once the clone exists) |
 | User | Access | Reading the credit balance |
+| Sound Effects | Access | Only if you generate your own sounds |
+| Music Generation | Access | Only if you generate your own music |
 
 `scripts/permission-test.sh <clip.mp3>` proves it against a restricted key in `TEST_ELEVENLABS_KEY`.
 It makes every call the pipeline makes, clones and deletes a 10 s test voice, and expects Models and History to be refused.
 
 ## Voice recipe
 
-`voice.json` is the single source of the recipe.
+Your config (see [Make it yours](#make-it-yours)) is the single source of the recipe; `scripts/config-path.sh` shows which file is in use.
 Each new video copies it to `src/config.json`, so later changes never alter an old video.
+The defaults below are what kept the author's clone consistent; the accent tag and the gate are opt-in.
 
 - Model `eleven_v4`, stability 0.5, similarity 0.85.
   v4 ignores speed, style, and speaker boost, so pace comes from `scripts/pad.dart`.
-- Every request starts with an accent audio tag (`prefix`).
+- Requests can start with an accent audio tag (`prefix`).
   On the author's clone, 7 of 10 scenes drifted American without it, and 0 of 10 with it.
 - Scenes are merged into chunks of up to 850 characters and stitched with `previous_request_ids`, so tone carries through a video.
 - A fixed `seed` per chunk (in `src/seeds.json`) gives back the same take for the same text, about 99% identical.
-- `scripts/check.dart` gates every scene on US-accent share, speaker likeness against `assets/voice/reference`, and words, and `tts.dart reroll` redoes only the chunks that fail.
+- `scripts/check.dart` checks every scene's words, and, when `gate` is set, its accent and likeness against `assets/voice/reference`; `tts.dart reroll` redoes only the chunks that fail.
 
 Tried on the author's clone and dropped:
 
@@ -165,12 +174,13 @@ All in `template/src/ui.tsx`:
 |---|---|
 | `assets/voice/sources.json` | Which public videos and seconds your voice clips come from; `fetch-voice.sh` rebuilds them |
 | `assets/voice/*.mp3`, `assets/voice/reference/*.mp3` | Your training and held-out clips; never committed |
-| `speaker.portrait` in `voice.json` | Your photo for intros, outros, and the camera box; never committed |
+| `speaker.portrait` in your config | Optional photo for intros, outros, and the camera box; never committed |
 | `assets/sfx/` | Typewriter loop and mouse click, from ElevenLabs sound effects |
 | `assets/music/minimal_lofi_bed_4min.mp3` | A 4 minute quiet bed from ElevenLabs music |
 
-The sound effects and music sit near -20 LUFS, so the `volume` values in code stay meaningful.
-For videos over 4 minutes, generate a longer bed rather than looping this one.
+They ship with the repo, so nothing has to be generated.
+To use your own, drop any royalty-free files (for example from the YouTube Audio Library) into `assets/sfx` and `assets/music` with the same names.
+The shipped files sit near -20 LUFS, so match that or adjust the `volume` values in `ui.tsx` and `Video.tsx`.
 
 ## Pronunciation
 

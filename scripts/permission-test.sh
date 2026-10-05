@@ -6,7 +6,7 @@
 set -u
 key=${TEST_ELEVENLABS_KEY:?set TEST_ELEVENLABS_KEY}
 api=https://api.elevenlabs.io
-voice=$(python3 -c "import json;print(json.load(open('${0:A:h:h}/voice.json'))['voice_id'])")
+voice=$(python3 -c "import json;print(json.load(open('$(zsh ${0:A:h}/config-path.sh)'))['voice_id'])")
 tmp=$(mktemp -d)
 pass=0; fail=0
 

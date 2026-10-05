@@ -9,8 +9,12 @@ import 'dart:io';
 // Then run layout.dart as usual.
 
 final studio = File.fromUri(Platform.script).parent.parent.path;
-// The project's snapshot of voice.json wins, so an old video keeps the recipe it was made with.
-final recipe = jsonDecode((File('src/config.json').existsSync() ? File('src/config.json') : File('$studio/voice.json')).readAsStringSync()) as Map;
+// Config lookup lives in scripts/config-path.sh; a project's own snapshot (src/config.json) wins over it,
+// so an old video keeps the recipe it was made with.
+String configFile(String studio) => File('src/config.json').existsSync()
+    ? 'src/config.json'
+    : (Process.runSync('zsh', ['$studio/scripts/config-path.sh']).stdout as String).trim();
+final recipe = jsonDecode(File(configFile(studio)).readAsStringSync()) as Map;
 const pad = 0.45; // silence on each side of a fresh clip, about Hark's sentence pause once joined
 
 String keyOf(Map l) => (l['tts'] ?? l['say']) as String;

@@ -4,16 +4,20 @@ import 'dart:io';
 // Gate every scene's narration before it goes into a video:
 //   words  - Whisper transcript vs script; a misheard name ("Clod Code") is only flagged,
 //            because captions always show the script text
-//   accent - CommonAccent share of US English must stay under gate.max_us in ../voice.json
-//   voice  - ECAPA speaker match vs real Hark clips must stay over gate.min_match
+//   accent - US English share must stay under gate.max_us (skipped when null)
+//   voice  - speaker likeness vs assets/voice/reference must stay over gate.min_match (skipped when null)
 // Failing scene ids go to check/bad.txt; `dart tts.dart reroll` redoes only those.
 //
 //   dart check.dart            # every scene
 //   dart check.dart intro,use  # only these
 
 final studio = File.fromUri(Platform.script).parent.parent.path;
-// The project's snapshot of voice.json wins, so an old video keeps the recipe it was made with.
-final gate = (jsonDecode((File('src/config.json').existsSync() ? File('src/config.json') : File('$studio/voice.json')).readAsStringSync()) as Map)['gate'] as Map;
+// Config lookup lives in scripts/config-path.sh; a project's own snapshot (src/config.json) wins over it,
+// so an old video keeps the recipe it was made with.
+String configFile(String studio) => File('src/config.json').existsSync()
+    ? 'src/config.json'
+    : (Process.runSync('zsh', ['$studio/scripts/config-path.sh']).stdout as String).trim();
+final gate = (jsonDecode(File(configFile(studio)).readAsStringSync()) as Map)['gate'] as Map;
 
 String norm(String s) => s
     .toLowerCase()
@@ -42,10 +46,11 @@ void main(List<String> args) {
 
   final w = Process.runSync('whisper', [...files, '--model', 'medium.en', '--language', 'en', '--output_format', 'txt', '--output_dir', 'check', '--fp16', 'False']);
   if (w.exitCode != 0) throw w.stderr;
-  final v = Process.runSync('$studio/.venv/bin/python', ['$studio/scripts/voicecheck.py', ...files]);
-  if (v.exitCode != 0) throw v.stderr;
+  final checkVoice = gate['max_us'] != null || gate['min_match'] != null;
+  final v = checkVoice ? Process.runSync('$studio/.venv/bin/python', ['$studio/scripts/voicecheck.py', ...files]) : null;
+  if (v != null && v.exitCode != 0) throw v.stderr;
   final voice = <String, List<double>>{}; // file name -> [match, indian, us]
-  for (final line in (v.stdout as String).split('\n')) {
+  for (final line in ((v?.stdout ?? '') as String).split('\n')) {
     final parts = line.trim().split(RegExp(r'\s+'));
     if (parts.length >= 7 && parts[0].endsWith('.mp3')) {
       voice[parts[0]] = [double.parse(parts[1]), double.parse(parts[2]), double.parse(parts[3])];
@@ -62,15 +67,16 @@ void main(List<String> args) {
     // A misheard name is only flagged, so score words as if it were heard right.
     final got = heard.replaceAllMapped(names, (m) => m[0]!.startsWith('ha') ? 'hark' : 'claude').split(' ');
     final wer = distance(want, got) / want.length;
-    final [match, indian, us] = voice['$id.mp3']!;
+    final [match, indian, us] = voice['$id.mp3'] ?? [double.nan, double.nan, double.nan];
     final notes = [if (misheard) '⚠ name said differently (captions are still right)'];
     final problems = [
       if (wer >= 0.2) 'words off (${(wer * 100).round()}%)',
-      if (us > gate['max_us']) 'American ${(us * 100).round()}%',
-      if (match.isNaN || match < gate['min_match']) 'less like Hark (${match.toStringAsFixed(2)})',
+      if (gate['max_us'] != null && !(us <= gate['max_us'])) 'American ${(us * 100).round()}%',
+      if (gate['min_match'] != null && !(match >= gate['min_match'])) 'less like the speaker (${match.toStringAsFixed(2)})',
     ];
     if (problems.isNotEmpty) bad.add(id);
-    print('${problems.isEmpty ? 'ok ' : 'BAD'} ${id.padRight(10)} match ${match.toStringAsFixed(2)}  indian ${(indian * 100).round()}%  us ${(us * 100).round()}%  ${[...problems, ...notes].join(', ')}');
+    final scores = checkVoice ? 'match ${match.toStringAsFixed(2)}  indian ${(indian * 100).round()}%  us ${(us * 100).round()}%  ' : '';
+    print('${problems.isEmpty ? 'ok ' : 'BAD'} ${id.padRight(10)} $scores${[...problems, ...notes].join(', ')}');
   }
   File('check/bad.txt').writeAsStringSync(bad.join(','));
   print(bad.isEmpty ? '\nAll scenes pass.' : '\nRe-roll with: dart ../../../scripts/tts.dart reroll');

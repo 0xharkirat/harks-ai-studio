@@ -1,0 +1,15 @@
+{
+  "_about": "List public videos of you talking alone, with no music. scripts/fetch-voice.sh cuts each clip with yt-dlp and ffmpeg. 2-4 minutes of train clips from one or two videos is plenty; reference clips (other parts of your videos) are only needed for the likeness check.",
+  "train": {
+    "filter": "highpass=f=70,loudnorm=I=-18:TP=-2:LRA=11",
+    "clips": [
+      {"file": "me_a.mp3", "video": "YOUTUBE_VIDEO_ID", "start": 60, "end": 150}
+    ]
+  },
+  "reference": {
+    "filter": "highpass=f=70,loudnorm=I=-18:TP=-2:LRA=11",
+    "clips": [
+      {"file": "reference/me_ref.mp3", "video": "ANOTHER_VIDEO_ID", "start": 200, "end": 245}
+    ]
+  }
+}

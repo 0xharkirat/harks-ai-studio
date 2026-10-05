@@ -4,7 +4,10 @@ import {loadFont as loadInter} from '@remotion/google-fonts/Inter';
 import {loadFont as loadMono} from '@remotion/google-fonts/JetBrainsMono';
 import {useAudioData, visualizeAudio} from '@remotion/media-utils';
 import {toCues} from './captions';
-import config from './config.json'; // copy of voice.json, written by new-video.sh
+import config from './config.json'; // the project's config snapshot, written by new-video.sh
+
+// The portrait is optional: without one, intros are a clean title card and there is no camera box.
+export const hasPortrait = Boolean(config.speaker.portrait);
 
 export const sans = loadInter('normal', {weights: ['400', '500', '600', '700', '800'], subsets: ['latin']}).fontFamily;
 export const mono = loadMono('normal', {weights: ['400', '600'], subsets: ['latin']}).fontFamily;
@@ -313,6 +316,11 @@ export const BrowserShot: React.FC<{
 
 /** Bottom-right camera box, like SSW TV, with the AI disclosure and a voice meter. */
 export const PiP: React.FC = () => {
+  if (!hasPortrait) return null;
+  return <PortraitBox />;
+};
+
+const PortraitBox: React.FC = () => {
   const frame = useCurrentFrame();
   const {fps} = useVideoConfig();
   const audio = useAudioData(staticFile('narration.wav'));
@@ -449,6 +457,7 @@ export const at = (cue: number[], i: number) => cue[Math.min(i, cue.length - 1)]
 export const Photo: React.FC<{frames: number; dim?: number; src?: string}> = ({frames, dim = 0, src = 'portrait.jpg'}) => {
   const frame = useCurrentFrame();
   const scale = interpolate(frame, [0, frames], [1.04, 1.12]);
+  if (!hasPortrait) return <Backdrop />;
   return (
     <AbsoluteFill>
       <Img src={staticFile(src)} style={{width: '100%', height: '100%', objectFit: 'cover', transform: `scale(${scale})`}} />
@@ -476,7 +485,7 @@ export const AiBadge: React.FC<{at: number; text?: string}> = ({at: from, text =
 
 /** SSW intro: portrait, AI badge, name lower third, then a "Today" lower third from the given line. */
 export const IntroCard: React.FC<{cue: number[]; frames: number; name: string; title: string; today: string; todayAt?: number}> = ({
-  cue, frames, name, title, today, todayAt = 2,
+  cue, frames, name, title, today, todayAt = 1,
 }) => (
   <AbsoluteFill>
     <Photo frames={frames} />

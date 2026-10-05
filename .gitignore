@@ -19,3 +19,8 @@ assets/music/*.wav
 
 # Template build output
 template/src/config.json
+
+# Personal config: your voice id, portrait, accent and clip list live in ~/.config/done-video/
+config.json
+voice.json
+assets/voice/sources.json

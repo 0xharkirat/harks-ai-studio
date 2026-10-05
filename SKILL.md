@@ -6,13 +6,15 @@ description: Make a narrated SSW-style done video, or a short tutorial, in the u
 # Done video
 
 The studio is this skill's base directory, which Claude Code shows when the skill loads; from a shell, `STUDIO=$(cd -P ~/.claude/skills/done-video && pwd)`.
-`voice.json` there is the locked recipe and the speaker's identity; never pass voice settings any other way.
+The recipe and the speaker's identity come from one config file (`scripts/config-path.sh` prints which); never pass voice settings any other way.
+The portrait, accent tag, voice profile, and accent and likeness gates are all optional in that config.
 `README.md` there is the reference: Voice, Subtitles, Components, Assets, and the "Tried and dropped" table.
 
 ## 0. Preflight
 
 - `echo ${ELEVENLABS_API_KEY:+set}` prints `set`; if not, the key belongs in `~/.zshrc.local`, never in chat.
-- `$STUDIO/.venv/bin/python -c "import speechbrain, librosa"` works; if not, run the venv line from README Install.
+- `voice_id` in the config is a real clone, not the placeholder; if not, see README "Make it yours".
+- If the config sets `gate`, `$STUDIO/.venv/bin/python -c "import speechbrain, librosa"` works; if not, run the venv line from README Install.
 - `whisper --help` works.
 
 Done when all three pass.
@@ -29,7 +31,7 @@ Done when you can state, one sentence each: the pain before, the change, and the
 ## 2. Create the project
 
 From `$STUDIO`: `scripts/new-video.sh NN-short-name`, where NN is the next number in `videos/`.
-It copies the template, fills the speaker's name into `script.json`, and snapshots `voice.json` into `src/config.json`, which the voice tools then use, so a later recipe change never alters this video.
+It copies the template, snapshots the config into `src/config.json` (the voice tools then use that, so a later recipe change never alters this video), and fills the speaker's name into `script.json`.
 It ends by printing `Ready:`; without that line it failed, and it removes the half-built folder itself.
 Run every later command from `videos/NN-short-name/project`.
 
@@ -38,7 +40,7 @@ Run every later command from `videos/NN-short-name/project`.
 Replace every `TODO` in `script.json`; the voice tools refuse to spend credits while one remains.
 
 - Follow the [SSW done video](https://www.ssw.com.au/rules/done-video) order: intro, overview, pain, demo (one or more scenes), outro, in 2-5 minutes (about 300-700 words).
-- Write in the speaker's spoken voice from `speaker.voice_profile` in `voice.json`, drafting with the `ai-tells` skill when it is installed.
+- Write in the speaker's spoken voice from `speaker.voice_profile` in the config when it is set, drafting with the `ai-tells` skill when it is installed.
   The `examples/` scripts show structure only; where they differ from the voice profile, the profile wins.
   The AI narrates about the person in third person ("<name> gave Claude Code one prompt") and talks to the viewer as "you".
 - Keep the intro line "I'm <ai_name>" and the sign-off "This was <ai_name>, signing off".
