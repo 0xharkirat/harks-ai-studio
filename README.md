@@ -1,70 +1,103 @@
 # harks-ai-studio
 
-Make SSW-style narrated videos in Hark's cloned voice (Hark's AI) with Claude Code, ElevenLabs, and Remotion.
+A Claude Code skill that makes SSW-style done videos, narrated in your own ElevenLabs voice clone and rendered with Remotion.
 
+Watch one: [Done Videos with ElevenLabs & Claude Code](https://youtu.be/H5bpsZGg4Co) (3:24), made entirely by this skill.
+The write-up with copy-paste prompts: [harksingh.com/posts/harks-ai-voice-clone](https://harksingh.com/posts/harks-ai-voice-clone).
+
+- [What it does](#what-it-does)
+- [Requirements](#requirements)
 - [Install](#install)
+- [Make it yours](#make-it-yours)
 - [Usage](#usage)
 - [Edit a finished video](#edit-a-finished-video)
-- [Check key permissions](#check-key-permissions)
-- [Style that works](#style-that-works)
+- [API key permissions](#api-key-permissions)
+- [Voice recipe](#voice-recipe)
+- [Subtitles](#subtitles)
 - [Components](#components)
 - [Assets](#assets)
-- [Voice](#voice)
-- [Subtitles](#subtitles)
 - [Pronunciation](#pronunciation)
 - [Gotchas](#gotchas)
 - [License](#license)
 
+## What it does
+
+You say "make a done video for <PBI link>".
+The skill reads the PR, issue, and commits, writes a script in the [SSW done video](https://www.ssw.com.au/rules/done-video) order (intro, overview, pain, demo, outro), and voices it with your clone.
+It checks every scene for accent drift and likeness, then renders a 1080p video with real screenshots, cursor clicks, SSW TV lower thirds, rule-based subtitles, typing and click sounds, and a quiet music bed.
+The narrator always introduces itself as your AI, so nobody mistakes the clone for you.
+
+## Requirements
+
+- macOS or Linux with [Claude Code](https://claude.com/claude-code)
+- An [ElevenLabs](https://elevenlabs.io) plan with Instant Voice Cloning (Starter or above)
+- Node 22, Dart 3, ffmpeg, Python 3.11 via `uv`, Whisper, and `yt-dlp`
+- A few minutes of public video of you talking alone, with no music
+
 ## Install
 
-On a new Mac (Hark's paths; anyone else can clone anywhere and link it):
-
 ```sh
-git clone <this repo> ~/Movies/harks-ai-studio
-ln -s ~/Movies/harks-ai-studio ~/.claude/skills/done-video      # dotfiles does this via home/.claude/skills/done-video
+git clone https://github.com/0xharkirat/harks-ai-studio ~/done-video-studio
+ln -s ~/done-video-studio ~/.claude/skills/done-video
+
 brew install ffmpeg node dart uv pipx yt-dlp && pipx install openai-whisper
-cd ~/Movies/harks-ai-studio && uv venv -p 3.11 .venv && VIRTUAL_ENV=.venv uv pip install speechbrain librosa "setuptools<70" "huggingface_hub<0.26"
-open -e ~/.zshrc.local   # paste: export ELEVENLABS_API_KEY="..."  (an editor keeps the key out of shell history; ~/.zshrc sources this file)
-scripts/fetch-voice.sh                                          # rebuilds assets/voice from assets/voice/sources.json
+cd ~/done-video-studio
+uv venv -p 3.11 .venv && VIRTUAL_ENV=.venv uv pip install speechbrain librosa "setuptools<70" "huggingface_hub<0.26"
 ```
 
-The voice-check models (SpeechBrain, about 100 MB) and Whisper models download on first use.
-To make it yours:
+Clone the repo anywhere you can write to: your videos are created inside it, in `videos/`.
+Then put your key in a file that never reaches git or shell history:
 
-1. Edit `speaker` in `voice.json`: name, title, portrait, voice profile, and the accent tag in `prefix`.
+```sh
+open -e ~/.zshrc.local     # add: export ELEVENLABS_API_KEY="..."
+echo '[ -f ~/.zshrc.local ] && source ~/.zshrc.local' >> ~/.zshrc
+```
+
+The voice-check models (SpeechBrain, about 100 MB) and Whisper download on first use.
+
+## Make it yours
+
+The defaults in `voice.json` are the author's.
+Replace them once:
+
+1. Edit `speaker` in `voice.json`: your AI's name, your name and title, the path to your portrait, your voice profile, and the accent tag in `prefix` (for example `[Indian English accent] `).
 2. List 2-4 minutes of your own clean, solo, public videos in `assets/voice/sources.json`, then run `scripts/fetch-voice.sh`.
-3. Run `scripts/clone-voice.sh`; it clones your voice and writes the new `voice_id` into `voice.json`.
-   Only clone your own voice, or one you have permission for.
+3. Run `scripts/clone-voice.sh`. It makes an Instant Voice Clone from those clips and writes the new `voice_id` into `voice.json`.
+
+Only clone your own voice, or one you have permission to use.
 
 ## Usage
 
-Ask Claude Code: "make a done video for <PBI link>".
-The `done-video` skill runs [`SKILL.md`](SKILL.md): gather the PBI, create the project, write the script, capture screenshots, voice and check the narration, build the scenes, render, deliver.
+In any Claude Code session:
 
-Every step in `SKILL.md` lists its commands, so it also works by hand.
-`examples/01-done-video/script.json` is a real done-video script, and `examples/02-voice-clone-tutorial/` shows every component in use.
-`videos/01-done-video-voice-clone` predates this pipeline; read its script, not its code.
+```text
+make a done video for https://github.com/<owner>/<repo>/pull/123
+```
+
+The skill follows [`SKILL.md`](SKILL.md): preflight, gather the PBI, create the project, write the script, capture screenshots, voice and check the narration, build the scenes, render, deliver.
+Every step lists its commands, so it also works by hand.
+
+`examples/01-done-video/script.json` is a real done-video script.
+`examples/02-voice-clone-tutorial/` shows every component in use.
 
 ## Edit a finished video
 
-Change only the lines that need it, without re-voicing the rest:
+Change only the lines that need it, without re-voicing the rest.
+Run these from the video's `project` folder:
 
 ```sh
 dart ../../../scripts/retake.dart split   # once, before you touch script.json
 # edit, add, or delete lines in script.json
-dart ../../../scripts/retake.dart build   # voices only new or changed lines (with context), rebuilds every scene
+dart ../../../scripts/retake.dart build   # voices only new or changed lines, then rebuilds every scene
 dart ../../../scripts/layout.dart
 ```
 
-`split` saves every spoken line as a clip in `public/audio/lines/` and indexes it in `src/lines.json` by its spoken text.
-`build` reuses any clip whose text is unchanged, so a 1-line fix costs about 100 credits instead of a full re-voice.
-`build` plays every new clip back through Whisper and prints what it heard next to the script.
-If a line was misheard, delete its entry from `src/lines.json` and run `build` again.
-Then update the scene's `cue[i]` indexes if you added or removed a line.
+`build` reuses every line whose text is unchanged, so a one-line fix costs about 100 credits.
+It plays each new line back through Whisper and prints what it heard next to the script.
 
-## Check key permissions
+## API key permissions
 
-A done-video key needs only these endpoints (verified 2026-10-04, 9 of 9 checks passed; Voice Generation is not needed):
+Give the key only these endpoints; everything else stays on **No Access**:
 
 | Endpoint | Access | Used for |
 |---|---|---|
@@ -74,14 +107,42 @@ A done-video key needs only these endpoints (verified 2026-10-04, 9 of 9 checks 
 | Music Generation | Access | Background music |
 | User | Access | Reading the credit balance |
 
-To prove it against a restricted key, put `export TEST_ELEVENLABS_KEY="..."` in `~/.zshrc.local` (not on the command line, which lands in shell history), then run `scripts/permission-test.sh assets/voice/hark_playwright_a.mp3`.
-It makes every pipeline call, clones and deletes a 10 s test voice, and expects Models and History to be refused.
+`scripts/permission-test.sh <clip.mp3>` proves it against a restricted key in `TEST_ELEVENLABS_KEY`.
+It makes every call the pipeline makes, clones and deletes a 10 s test voice, and expects Models and History to be refused.
 
-## Style that works
+## Voice recipe
 
-- Real screenshots in `BrowserShot`: the cursor glides, clicks with sound, the target gets a red box, and the view zooms in.
-- One light joke per scene, like the sysadmin line in the permissions tip.
-- SSW tags for every do and don't: "✅ Good example" and "❌ Bad example".
+`voice.json` is the single source of the recipe.
+Each new video copies it to `src/config.json`, so later changes never alter an old video.
+
+- Model `eleven_v4`, stability 0.5, similarity 0.85.
+  v4 ignores speed, style, and speaker boost, so pace comes from `scripts/pad.dart`.
+- Every request starts with an accent audio tag (`prefix`).
+  On the author's clone, 7 of 10 scenes drifted American without it, and 0 of 10 with it.
+- Scenes are merged into chunks of up to 850 characters and stitched with `previous_request_ids`, so tone carries through a video.
+- A fixed `seed` per chunk (in `src/seeds.json`) gives back the same take for the same text, about 99% identical.
+- `scripts/check.dart` gates every scene on US-accent share, speaker likeness against `assets/voice/reference`, and words, and `tts.dart reroll` redoes only the chunks that fail.
+
+Tried on the author's clone and dropped:
+
+| Idea | Result |
+|---|---|
+| Stability 0.7 | The accent tag stopped working: 60-68% US |
+| Turbo v2.5, v4 Turbo | Half price, but less like the speaker, or American |
+| Clones from 2 minutes of one video | Less like the speaker than a 4 minute clone from 2 videos |
+| Pitch post-processing (Praat, Rubber Band) | Matched the numbers but sounded rough and noisy |
+| Chatterbox (local) | Higher pitch, weaker accent, less like the speaker |
+
+## Subtitles
+
+`template/src/captions.ts` follows the Netflix English timed text guide and the BBC subtitle guidelines:
+
+- At most 2 lines of 42 characters, bottom-heavy, with no one- or two-word lines.
+- Break after punctuation, then before a conjunction, then before a preposition.
+- Never split an article from its noun, a name or title, a pronoun or auxiliary from its verb, or a number from what it counts.
+- At least 0.8 s on screen, held 0.5 s after the speech ends.
+
+Add multi-word product names to `TERMS` in `captions.ts` so they stay on one line.
 
 ## Components
 
@@ -89,90 +150,45 @@ All in `template/src/ui.tsx`:
 
 | Component | Use |
 |---|---|
-| `LowerThird` | SSW TV name bar: white box, red strip, red slanted edge |
-| `SswTag` | "✅ Good example", "❌ Bad example", "LEARN MORE" bars |
-| `Terminal` | `cmd` and `prompt` lines type out with the typewriter sound |
-| `BrowserShot` | Real screenshot with a gliding cursor, click sound, red highlight, zoom, and `blur` boxes |
-| `PermissionPicker` | ElevenLabs-style endpoint list; the cursor clicks each chosen access level |
+| `IntroCard`, `OutroCard` | Portrait, AI disclosure badge, name lower third, recap |
+| `LowerThird`, `SswTag` | SSW TV name bar; "✅ Good example", "❌ Bad example" and "LEARN MORE" bars |
+| `BrowserShot` | Real screenshot with a gliding cursor, click sound, red highlight, zoom, and blur boxes |
+| `Terminal` | Commands and prompts type out with the typewriter sound |
+| `PermissionPicker` | Endpoint list where the cursor clicks each access level |
 | `PiP` | Bottom-right camera box with the "AI VOICE" label and a voice meter |
-| `Captions` | Burned-in subtitles, cut by the rules in `captions.ts` (see [Subtitles](#subtitles)) |
+| `Captions` | Burned-in subtitles |
 | `Header`, `Chip`, `Appear`, `Between`, `Backdrop` | Titles, chips, and timed reveals |
-
-Sound levels live in `sfx` in `ui.tsx` and `MUSIC` in `Video.tsx`.
 
 ## Assets
 
-| Path | What | How it was made |
-|---|---|---|
-| `assets/voice/*.mp3` | 4:12 of clean solo Hark used to train the clone | Cut from the Playwright agents and Fumadocs SSW TV videos |
-| `assets/voice/reference/*.mp3` | Held-out real clips that `voicecheck.py` scores likeness against | Other parts of Hark's SSW TV videos |
-| `assets/brand/hark.jpg` | Portrait for intros, outros, and the camera box | Frame from an SSW TV video |
-| `assets/sfx/typewriter_loop.wav` | 6 s loop | ElevenLabs sound effects, `loop: true`: "Soft vintage typewriter typing, quick steady keystrokes, close mic, dry, no bell" |
-| `assets/sfx/mouse_click.wav` | One click | ElevenLabs sound effects: "Single crisp computer mouse click, close mic, dry", trimmed to 0.12 s |
-| `assets/music/minimal_lofi_bed_4min.mp3` | 4 min quiet bed, fades out on its own | ElevenLabs music `music_v1`, instrumental: "Very minimal, subtle background music for a calm tech tutorial... 85 BPM" |
+| Path | What |
+|---|---|
+| `assets/voice/sources.json` | Which public videos and seconds your voice clips come from; `fetch-voice.sh` rebuilds them |
+| `assets/voice/*.mp3`, `assets/voice/reference/*.mp3` | Your training and held-out clips; never committed |
+| `speaker.portrait` in `voice.json` | Your photo for intros, outros, and the camera box; never committed |
+| `assets/sfx/` | Typewriter loop and mouse click, from ElevenLabs sound effects |
+| `assets/music/minimal_lofi_bed_4min.mp3` | A 4 minute quiet bed from ElevenLabs music |
 
 The sound effects and music sit near -20 LUFS, so the `volume` values in code stay meaningful.
-For a video longer than 4 min, generate a longer bed (about 900 credits per minute) rather than looping this one.
-
-## Voice
-
-`voice.json` is the single source of the recipe; every script reads it.
-
-- ElevenLabs Instant Voice Clone "Hark's AI", voice ID `EtyQYZi13hBpNi6qJGxp`, trained on `assets/voice/*.mp3`.
-- Model `eleven_v4`, stability 0.5, similarity 0.85.
-  v4 ignores speed, style, and speaker boost, so pace comes from `pad.dart`.
-- Every request starts with the audio tag `[Indian English accent]`.
-  Without it the clone drifts American (7 of 10 tutorial scenes did); with it, 0 of 10.
-- Scenes are merged into chunks of up to 850 characters and stitched with `previous_request_ids`, so tone carries through a video.
-  `previous_text` and `next_text` are free; request IDs expire after 2 hours.
-- A fixed `seed` per chunk (stored in `src/seeds.json`) gives back the same take for the same text, about 99% identical.
-- `scripts/voicecheck.py` scores any file: speaker match vs `assets/voice/reference` (real Hark scores 0.76-0.78), accent shares, pitch, and pitch range.
-
-Tried and dropped on 2026-10-04, so nobody repeats them:
-
-| Idea | Result |
-|---|---|
-| Stability 0.7 | The accent tag stopped working: 60-68% US |
-| Turbo v2.5, v4 Turbo | Half price, but less like Hark (0.51-0.67) or American |
-| New clones from 2 min of one video (`v2`, `v3`) | Less like Hark than the original 4 min clone |
-| Pitch post-processing (Praat, Rubber Band) | Matched the numbers but sounded rough and noisy |
-| Chatterbox (local, free) | Higher pitch, weaker accent, less like Hark |
-
-## Subtitles
-
-`template/src/captions.ts` cuts subtitles by the Netflix English timed text guide and the BBC subtitle guidelines:
-
-- At most 2 lines of 42 characters, bottom-heavy when split, with no 1-2 word lines.
-- Break after punctuation first, then before a conjunction, then before a preposition.
-- Never split an article from its noun, a name or title ("Software Engineer", "Claude Code"), a pronoun or auxiliary from its verb, or a number from what it counts.
-- At least 0.8 s on screen, starting with the speech and held 0.5 s after it ends.
-
-Add multi-word product names and phrases to `TERMS` in `captions.ts` so they always stay on one line.
+For videos over 4 minutes, generate a longer bed rather than looping this one.
 
 ## Pronunciation
 
-Use the `tts` field for these:
+Put spoken spellings in a line's `tts` field; `say` stays the subtitle text.
 
-- Acronyms are spelled out: "S S W", "P B I", "Y T D L P", and "Hark's A I".
-- "Fumadocs" becomes "Fuma docs" and "elevenlabs.io" becomes "elevenlabs dot io".
-- Money is written as words ("six dollars").
-- With the Indian accent tag, "Claude" often comes out as "Clod".
-  Leave it: captions show "Claude", and re-rolls for names waste credits.
+- Spell acronyms out: "S S W", "P B I", "Y T D L P".
+- Write money, percentages, times, and years in words.
+- A product name the accent bends ("Claude" heard as "Clod") is only flagged, never re-rolled: subtitles show the right word.
 
 ## Gotchas
 
-- `pad.dart` sets the pace; v4 ignores the `speed` setting.
-- ElevenLabs character end times run into the pauses, so `pad.dart` cuts at silences that `silencedetect` finds.
-- Starter caps output at `mp3_44100_128`.
 - The `character-cost` response header is the true price of a call; `tts.dart` prints the total.
-  v4 cost about 0.11 credits per character during its launch sale (to about 2026-10-12), then 1.
-- Unused Starter credits roll over for up to 2 months.
-- Screenshots come from the Playwright MCP browser after Hark logs in himself.
-  Blur key hints, and leave key-creation forms out of the screenshots.
+- Starter caps output at `mp3_44100_128`, and unused credits roll over for up to 2 months.
+- Capture screenshots with the Playwright MCP browser, log in yourself, and blur key hints.
 - On YouTube, answer "altered or synthetic content" with Yes.
 
 ## License
 
 Code: [MIT](LICENSE), Harkirat Singh.
 The music and sound effects in `assets/` were generated with ElevenLabs on a paid plan; check the ElevenLabs terms before reusing them elsewhere.
-Voice clips are not included: clone only your own voice, or one you have permission to use.
+No voice clips are included.

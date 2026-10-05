@@ -1,11 +1,11 @@
 ---
 name: done-video
-description: Make a narrated SSW-style done video, or a short tutorial, in the user's ElevenLabs voice clone, rendered with Remotion. Covers PBI to script, cloned narration gated for accent and likeness, real screenshots with cursor clicks, subtitles, and render. Use for "make a done video", "done video for this PBI", "narrate this in my voice", "Hark's AI video", or fixing an existing done video.
+description: Make a narrated SSW-style done video, or a short tutorial, in the user's ElevenLabs voice clone, rendered with Remotion. Covers PBI to script, cloned narration gated for accent and likeness, real screenshots with cursor clicks, subtitles, and render. Use for "make a done video", "done video for this PBI", "narrate this in my voice", "a video in my AI voice", or fixing an existing done video.
 ---
 
 # Done video
 
-The studio is this skill's folder: `STUDIO=$(cd -P ~/.claude/skills/done-video && pwd)`.
+The studio is this skill's base directory, which Claude Code shows when the skill loads; from a shell, `STUDIO=$(cd -P ~/.claude/skills/done-video && pwd)`.
 `voice.json` there is the locked recipe and the speaker's identity; never pass voice settings any other way.
 `README.md` there is the reference: Voice, Subtitles, Components, Assets, and the "Tried and dropped" table.
 
@@ -38,9 +38,9 @@ Run every later command from `videos/NN-short-name/project`.
 Replace every `TODO` in `script.json`; the voice tools refuse to spend credits while one remains.
 
 - Follow the [SSW done video](https://www.ssw.com.au/rules/done-video) order: intro, overview, pain, demo (one or more scenes), outro, in 2-5 minutes (about 300-700 words).
-- Write in the speaker's spoken voice from `speaker.voice_profile` in `voice.json` (Hark: the "On video" section of `~/VOICE.md`), drafting with the `ai-tells` skill.
+- Write in the speaker's spoken voice from `speaker.voice_profile` in `voice.json`, drafting with the `ai-tells` skill when it is installed.
   The `examples/` scripts show structure only; where they differ from the voice profile, the profile wins.
-  The AI narrates about the person in third person ("Hark gave Claude Code one prompt") and talks to the viewer as "you".
+  The AI narrates about the person in third person ("<name> gave Claude Code one prompt") and talks to the viewer as "you".
 - Keep the intro line "I'm <ai_name>" and the sign-off "This was <ai_name>, signing off".
 - `say` is the subtitle text; put spoken spellings in `tts`: acronyms ("S S W", "P B I", "Y T D L P"), money, percentages, times and years in words, and command names as they are said ("claude budget").
 - One line per sentence or two; each scene starts a new visual.
