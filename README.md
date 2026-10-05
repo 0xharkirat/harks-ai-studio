@@ -173,5 +173,6 @@ Use the `tts` field for these:
 
 ## License
 
-Personal use by Hark Singh.
-Voice output, music, and sound effects come from an ElevenLabs paid plan, which includes a commercial license.
+Code: [MIT](LICENSE), Harkirat Singh.
+The music and sound effects in `assets/` were generated with ElevenLabs on a paid plan; check the ElevenLabs terms before reusing them elsewhere.
+Voice clips are not included: clone only your own voice, or one you have permission to use.
