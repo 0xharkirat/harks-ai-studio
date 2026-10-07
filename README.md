@@ -85,6 +85,10 @@ make a done video for https://github.com/<owner>/<repo>/pull/123
 The skill follows [`SKILL.md`](SKILL.md): preflight, gather the PBI, create the project, write the script, capture screenshots, voice and check the narration, build the scenes, render, deliver.
 Every step lists its commands, so it also works by hand.
 
+Once the PBI is tested, say `test pass`.
+[`UPLOAD.md`](UPLOAD.md) writes `youtube.txt` next to the video: title, description, chapters timed from the scenes, version line, and upload settings.
+You upload it yourself, send back the link, and the skill posts the Done on the issue.
+
 `examples/01-done-video/script.json` is a real done-video script.
 `examples/02-voice-clone-tutorial/` shows every component in use.
 

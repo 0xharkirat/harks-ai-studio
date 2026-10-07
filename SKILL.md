@@ -1,6 +1,6 @@
 ---
 name: done-video
-description: Make a narrated SSW-style done video, or a short tutorial, in the user's ElevenLabs voice clone, rendered with Remotion. Covers PBI to script, cloned narration gated for accent and likeness, real screenshots with cursor clicks, subtitles, and render. Use for "make a done video", "done video for this PBI", "narrate this in my voice", "a video in my AI voice", or fixing an existing done video.
+description: Make a narrated SSW-style done video, or a short tutorial, in the user's ElevenLabs voice clone, rendered with Remotion. Covers PBI to script, cloned narration gated for accent and likeness, real screenshots with cursor clicks, subtitles, and render. Use for "make a done video", "done video for this PBI", "narrate this in my voice", "a video in my AI voice", fixing an existing done video, or "test pass" on a PBI that has one (YouTube upload pack).
 ---
 
 # Done video
@@ -9,6 +9,7 @@ The studio is this skill's base directory, which Claude Code shows when the skil
 The recipe and the speaker's identity come from one config file (`scripts/config-path.sh` prints which); never pass voice settings any other way.
 The portrait, accent tag, voice profile, and accent and likeness gates are all optional in that config.
 `README.md` there is the reference: Voice, Subtitles, Components, Assets, and the "Tried and dropped" table.
+On "test pass" for a PBI whose video is already rendered, follow [`UPLOAD.md`](UPLOAD.md) in place of the steps below.
 
 ## 0. Preflight
 
@@ -98,4 +99,4 @@ Done when loudness reads about -16 LUFS and the frame sheet shows every scene.
 ## 8. Deliver
 
 Copy `out/video.mp4` to `videos/NN-short-name/<title>.mp4`, open it for the user, and give them the path.
-On YouTube the user answers "altered or synthetic content" with Yes.
+The YouTube upload waits for "test pass"; [`UPLOAD.md`](UPLOAD.md) builds its title, description, and settings.
