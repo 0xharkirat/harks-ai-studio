@@ -1,0 +1,46 @@
+[
+  {
+    "id": "intro",
+    "lines": [
+      {
+        "say": "TODO: the question this video answers."
+      },
+      {
+        "say": "TODO: the answer, as one promise."
+      }
+    ]
+  },
+  {
+    "id": "idea",
+    "lines": [
+      {
+        "say": "TODO: the first part on screen."
+      },
+      {
+        "say": "TODO: the next step; each line adds one part to the diagram."
+      },
+      {
+        "say": "TODO: what the finished diagram shows."
+      }
+    ]
+  },
+  {
+    "id": "code",
+    "lines": [
+      {
+        "say": "TODO: the first line of code, and what it does."
+      },
+      {
+        "say": "TODO: the next line of code."
+      }
+    ]
+  },
+  {
+    "id": "recap",
+    "lines": [
+      {
+        "say": "TODO: the whole idea again, in one sentence."
+      }
+    ]
+  }
+]

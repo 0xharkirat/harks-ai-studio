@@ -1,0 +1,57 @@
+[
+  {
+    "id": "intro",
+    "lines": [
+      {
+        "say": "This is how git rebase replays your commits."
+      },
+      {
+        "say": "It copies them, one at a time, onto a new base."
+      }
+    ]
+  },
+  {
+    "id": "setup",
+    "lines": [
+      {
+        "say": "Main has commits A and B."
+      },
+      {
+        "say": "Your feature branch starts at B and adds D and E."
+      },
+      {
+        "say": "Then someone adds commit C to main."
+      }
+    ],
+    "hold": 0.6
+  },
+  {
+    "id": "replay",
+    "lines": [
+      {
+        "say": "Run git rebase main, and git sets D and E aside."
+      },
+      {
+        "say": "It replays D on top of C, as a new commit."
+      },
+      {
+        "say": "Then it replays E on top of the new D."
+      },
+      {
+        "say": "Your branch now points at the last copy."
+      }
+    ],
+    "hold": 0.8
+  },
+  {
+    "id": "code",
+    "lines": [
+      {
+        "say": "First, switch to your branch and rebase it onto main."
+      },
+      {
+        "say": "If a conflict stops the replay, fix it, then continue."
+      }
+    ]
+  }
+]

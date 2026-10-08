@@ -40,6 +40,7 @@ The narrator always introduces itself as your AI, so nobody mistakes the clone f
 ```sh
 git clone https://github.com/0xharkirat/harks-ai-studio ~/done-video-studio
 ln -s ~/done-video-studio ~/.claude/skills/done-video
+ln -s ~/done-video-studio/explainer-video ~/.claude/skills/explainer-video
 
 brew install ffmpeg node dart uv pipx yt-dlp && pipx install openai-whisper
 cd ~/done-video-studio
@@ -92,6 +93,14 @@ You upload it yourself, send back the link, and the skill posts the Done on the 
 
 `examples/01-done-video/script.json` is a real done-video script.
 `examples/02-voice-clone-tutorial/` shows every component in use.
+
+For a 3Blue1Brown-style explainer on any topic, voiced locally with no API key:
+
+```text
+make an explainer video on how git rebase replays commits
+```
+
+The `explainer-video` skill follows [`explainer-video/SKILL.md`](explainer-video/SKILL.md), and `examples/03-git-rebase-explainer/` is the result.
 
 ## Edit a finished video
 
@@ -158,7 +167,7 @@ The default is `Aman`, a neural Indian English voice; System Settings > Accessib
 It writes the same files as the ElevenLabs path, so `pad.dart` and `layout.dart` run unchanged.
 `check.dart` skips the accent and likeness gates for a local voice.
 `retake.dart` refuses a local voice, because a full re-voice is free.
-A new local model, such as Kokoro, is one more case in `localVoice` in `scripts/tts.dart`.
+Another local model, such as Kokoro, is one more case in `localVoice` in `scripts/tts.dart`.
 
 ## Subtitles
 
