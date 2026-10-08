@@ -95,9 +95,10 @@ ffmpeg -i out/video.mp4 -af ebur128 -f null - 2>&1 | grep -A1 "Integrated loudne
 ffmpeg -i out/video.mp4 -vf "fps=1/7,scale=384:-1,tile=6x5" -frames:v 1 out/sheet.jpg
 ```
 
-Done when loudness reads about -16 LUFS and the frame sheet shows every scene.
+Done when loudness reads about -16 LUFS and the frame sheet shows every scene; every re-render repeats this check.
 
 ## 8. Deliver
 
 Copy `out/video.mp4` to `videos/NN-short-name/<title>.mp4`, open it for the user, and give them the path.
+When replacing a copy the user may have open, close it in the player first (`osascript -e 'tell application "QuickTime Player" to close (every document whose name contains "<title>") saving no'`); a file overwritten while open plays as one frozen frame with no sound.
 The YouTube upload waits for "test pass"; [`UPLOAD.md`](UPLOAD.md) builds its title, description, and settings.
