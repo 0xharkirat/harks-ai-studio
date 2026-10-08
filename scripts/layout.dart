@@ -6,8 +6,11 @@ const fps = 30;
 
 void main() {
   final t = jsonDecode(File('src/timings.json').readAsStringSync()) as List;
+  final script = {for (final s in jsonDecode(File('script.json').readAsStringSync()) as List) s['id']: s as Map};
   // A scene's optional "hold" in script.json adds silent seconds after its last line, e.g. to let a recorded clip play.
-  final hold = {for (final s in jsonDecode(File('script.json').readAsStringSync()) as List) s['id']: (s['hold'] as num?)?.toDouble() ?? 0.0};
+  final hold = {for (final e in script.entries) e.key: (e.value['hold'] as num?)?.toDouble() ?? 0.0};
+  // "continues": true marks a scene that carries on the picture of the scene before it; Video.tsx cuts to it with no fade.
+  final continues = {for (final e in script.entries) if (e.value['continues'] == true) e.key};
   var cursor = 0.0;
   final scenes = [];
   final filter = StringBuffer();
@@ -21,6 +24,7 @@ void main() {
       'id': s['id'],
       'from': (cursor * fps).round(),
       'frames': ((cursor + total) * fps).round() - (cursor * fps).round(),
+      if (i > 0 && continues.contains(s['id'])) 'continues': true,
       'audioFrom': ((cursor + lead) * fps).round(),
       'lines': [
         for (final l in s['lines'])

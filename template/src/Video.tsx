@@ -3,7 +3,11 @@ import {AbsoluteFill, Audio, interpolate, Sequence, staticFile, useCurrentFrame}
 import layoutJson from './layout.json';
 
 // Written by scripts/layout.dart; the template ships an empty placeholder.
-type Layout = {fps: number; totalFrames: number; scenes: {id: string; from: number; frames: number; lines: {say: string; start: number; end: number}[]}[]};
+type Layout = {
+  fps: number;
+  totalFrames: number;
+  scenes: {id: string; from: number; frames: number; continues?: boolean; lines: {say: string; start: number; end: number}[]}[];
+};
 const layout = layoutJson as unknown as Layout;
 import * as Scenes from './scenes';
 import type {SceneProps} from './scenes';
@@ -20,9 +24,11 @@ const sceneFor = (id: string): React.FC<SceneProps> => {
 // Very quiet bed: about 20 dB under the voice, fading in and out.
 const MUSIC = 0.13;
 
-const Fade: React.FC<{frames: number; children: React.ReactNode}> = ({frames, children}) => {
+// A scene fades in from black and dims as it ends. A scene with "continues" in script.json carries on the
+// picture before it, so that cut has neither: a diagram that runs on into the next scene stays steady.
+const Fade: React.FC<{frames: number; fadeIn: boolean; fadeOut: boolean; children: React.ReactNode}> = ({frames, fadeIn, fadeOut, children}) => {
   const f = useCurrentFrame();
-  const o = interpolate(f, [0, 8, frames - 6, frames], [0, 1, 1, 0.6], {extrapolateRight: 'clamp'});
+  const o = interpolate(f, [0, 8, frames - 6, frames], [fadeIn ? 0 : 1, 1, 1, fadeOut ? 0.6 : 1], {extrapolateRight: 'clamp'});
   return <AbsoluteFill style={{opacity: o}}>{children}</AbsoluteFill>;
 };
 
@@ -50,13 +56,13 @@ export const Video: React.FC<{voice?: boolean}> = ({voice = true}) => {
         src={staticFile('music/minimal_lofi_bed_4min.mp3')}
         volume={(f) => MUSIC * interpolate(f, [0, 45, total - 90, total], [0, 1, 1, 0], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'})}
       />
-      {layout.scenes.map((s) => {
+      {layout.scenes.map((s, i) => {
         const Scene = sceneFor(s.id);
         const cue = s.lines.map((l) => l.start - s.from);
         const ends = s.lines.map((l) => l.end - s.from);
         return (
           <Sequence key={s.id} from={s.from} durationInFrames={s.frames} name={s.id}>
-            <Fade frames={s.frames}>
+            <Fade frames={s.frames} fadeIn={!s.continues} fadeOut={!layout.scenes[i + 1]?.continues}>
               <Scene cue={cue} ends={ends} frames={s.frames} />
             </Fade>
           </Sequence>

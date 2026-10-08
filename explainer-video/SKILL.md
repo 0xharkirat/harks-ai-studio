@@ -36,6 +36,7 @@ Replace every `TODO` in `script.json`.
 - Scene ids are 1 lowercase word that becomes the component name (`replay` -> `Replay`); `title`, `heading`, and `diagram` clash with the imports.
 - `say` is the subtitle text; put spoken spellings in `tts`, such as "D prime" for "D′" or "dash dash continue" for "--continue".
 - Give a scene `"hold": <seconds>` when its last part lands after its last line.
+- Give a scene `"continues": true` when it carries on the diagram of the scene before it: that cut has no fade, so the diagram stays steady.
 
 Done when no `TODO` is left, no sentence has more than 20 words, and the word count fits the length.
 
@@ -59,7 +60,7 @@ Build them from `Title`, `Heading`, `Diagram`, and `CodeWalk` in `src/explain.ts
 
 - Keep the 3Blue1Brown feel: a plain dark background, and a picture that starts near empty and gains 1 part per line.
 - Give each part the cue of the words that name it: `at(cue, i)` for a line, `within(cue, ends, i, f)` for a word at fraction `f` of line `i`.
-- To carry a diagram into the next scene, repeat its nodes there without `at`.
+- To carry a diagram into a `continues` scene, repeat its nodes there without `at`, at their final places.
 - Use `out` to ghost a part the narration replaces, `move` to glide a label, and `flash` to point at a node.
 - Keep every part above y 880, so the subtitles stay clear.
 - `$STUDIO/examples/03-git-rebase-explainer/` is a finished explainer.

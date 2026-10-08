@@ -27,6 +27,7 @@
   },
   {
     "id": "replay",
+    "continues": true,
     "lines": [
       {
         "say": "Run git rebase main, and git sets D and E aside."
