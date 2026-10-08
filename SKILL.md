@@ -1,6 +1,6 @@
 ---
 name: done-video
-description: Make a narrated SSW-style done video, or a short tutorial, in the user's ElevenLabs voice clone, rendered with Remotion. Covers PBI to script, cloned narration gated for accent and likeness, real screenshots with cursor clicks, subtitles, and render. Use for "make a done video", "done video for this PBI", "narrate this in my voice", "a video in my AI voice", fixing an existing done video, or "test pass" on a PBI that has one (YouTube upload pack).
+description: Make a narrated SSW done video, or a short tutorial, in the user's own ElevenLabs voice clone, rendered with Remotion. Covers PBI to script, cloned narration gated for accent and likeness, real screenshots with cursor clicks, subtitles, and render. Use for "make a done video", "done video for this PBI", "narrate this in my voice", "a video in my AI voice", fixing an existing done video, or "test pass" on a PBI that has one (YouTube upload pack). An explainer on a general topic, with no PBI and no cloned voice, belongs to explainer-video.
 ---
 
 # Done video
