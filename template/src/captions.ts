@@ -3,6 +3,7 @@
 // - break after punctuation, then before conjunctions, then before prepositions
 // - never split an article from its noun, a name, a title like "Software Engineer", a pronoun or
 //   auxiliary from its verb, or a number from what it counts; never end a line on "to", "the", "and"...
+// - no cue of 1 or 2 words unless it is the whole line: a short tail joins the cue before it
 // - at least 0.8 s on screen, held 0.5 s after the speech ends when nothing follows
 
 export type Line = {say: string; start: number; end: number};
@@ -89,8 +90,11 @@ const splitCues = (words: string[], cost: number[], strict = true): {span: [numb
       const lay = layoutLines(words, cost, i, j, strict);
       if (!lay) continue;
       const len = length(words, i, j);
-      const short = len < 18 && j < n ? (18 - len) * 3 : 0; // avoid flashes of 1-2 words
-      const c = best[i] + cost[j - 1] * 10 + short + lay.cost * 0.75;
+      // Avoid short flashes at either end of a line; a cue of 1-2 words ("and E.") is an orphan, so never, if anything else fits.
+      const part = i > 0 || j < n;
+      const short = part && len < 18 ? (18 - len) * 3 : 0;
+      const orphan = part && j - i <= 2 ? 1000 : 0;
+      const c = best[i] + cost[j - 1] * 10 + short + orphan + lay.cost * 0.75;
       if (c < best[j]) {
         best[j] = c;
         prev[j] = i;

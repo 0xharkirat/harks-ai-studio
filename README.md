@@ -176,6 +176,7 @@ Another local model, such as Kokoro, is one more case in `localVoice` in `script
 - At most 2 lines of 42 characters, bottom-heavy, with no one- or two-word lines.
 - Break after punctuation, then before a conjunction, then before a preposition.
 - Never split an article from its noun, a name or title, a pronoun or auxiliary from its verb, or a number from what it counts.
+- No cue of 1 or 2 words, unless it is the whole line: a short tail joins the cue before it.
 - At least 0.8 s on screen, held 0.5 s after the speech ends.
 
 Add multi-word product names to `TERMS` in `captions.ts` so they stay on one line.
