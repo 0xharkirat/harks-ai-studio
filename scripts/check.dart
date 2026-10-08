@@ -6,6 +6,7 @@ import 'dart:io';
 //            because captions always show the script text
 //   accent - US English share must stay under gate.max_us (skipped when null)
 //   voice  - speaker likeness vs assets/voice/reference must stay over gate.min_match (skipped when null)
+// The accent and voice gates measure the clone, so a local voice (tts.provider other than elevenlabs) skips them.
 // Failing scene ids go to check/bad.txt; `dart tts.dart reroll` redoes only those.
 //
 //   dart check.dart            # every scene
@@ -17,7 +18,9 @@ final studio = File.fromUri(Platform.script).parent.parent.path;
 String configFile(String studio) => File('src/config.json').existsSync()
     ? 'src/config.json'
     : (Process.runSync('zsh', ['$studio/scripts/config-path.sh']).stdout as String).trim();
-final gate = (jsonDecode(File(configFile(studio)).readAsStringSync()) as Map)['gate'] as Map;
+final config = jsonDecode(File(configFile(studio)).readAsStringSync()) as Map;
+final clone = ((config['tts'] as Map?)?['provider'] ?? 'elevenlabs') == 'elevenlabs';
+final gate = clone ? config['gate'] as Map : const {};
 
 String norm(String s) => s
     .toLowerCase()
@@ -79,5 +82,9 @@ void main(List<String> args) {
     print('${problems.isEmpty ? 'ok ' : 'BAD'} ${id.padRight(10)} $scores${[...problems, ...notes].join(', ')}');
   }
   File('check/bad.txt').writeAsStringSync(bad.join(','));
-  print(bad.isEmpty ? '\nAll scenes pass.' : '\nRe-roll with: dart ../../../scripts/tts.dart reroll');
+  print(bad.isEmpty
+      ? '\nAll scenes pass.'
+      : clone
+          ? '\nRe-roll with: dart ../../../scripts/tts.dart reroll'
+          : '\nA local voice reads the same way every time: respell the line in its tts field, then run tts.dart again.');
 }

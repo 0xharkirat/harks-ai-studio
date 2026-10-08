@@ -17,6 +17,13 @@
     "similarity_boost": 0.85
   },
   "chunk_chars": 850,
+  "tts": {
+    "provider": "elevenlabs",
+    "say": {
+      "voice": "Aman",
+      "rate": null
+    }
+  },
   "gate": {
     "max_us": null,
     "min_match": null
@@ -33,6 +40,7 @@
     "prefix": "Optional audio tag sent before every request, like \"[Indian English accent] \", if your clone drifts toward another accent.",
     "voice_settings": "eleven_v4 only honours stability and similarity_boost.",
     "chunk_chars": "Scenes are merged into requests up to this size; very short requests drift more.",
+    "tts": "provider picks the narrator: elevenlabs (your clone) or say (macOS say, free and offline). scripts/new-video.sh --explainer sets say in that video's own copy. say.voice is a name from `say -v '?'`; rate is words a minute, and null keeps the voice's own pace.",
     "gate": "Optional checks per scene: max_us fails a scene above this US-accent share (0-1), min_match fails it below this likeness to the clips in assets/voice/reference. null skips the check.",
     "voice_sources": "Optional path to a sources.json listing the public videos your voice clips come from; scripts/fetch-voice.sh rebuilds the clips from it.",
     "youtube": "Used by UPLOAD.md on \"test pass\": channel is the YouTube channel you upload done videos to, category its YouTube category."

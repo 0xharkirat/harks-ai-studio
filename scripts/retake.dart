@@ -130,6 +130,13 @@ Future<void> build() async {
 }
 
 Future<void> main(List<String> args) async {
+  final provider = (recipe['tts'] as Map?)?['provider'] ?? 'elevenlabs';
+  if (provider != 'elevenlabs') {
+    // A local voice is free and gives the same take every time, so a full re-voice replaces a retake.
+    stderr.writeln('retake.dart re-voices lines with ElevenLabs, but this video uses tts.provider "$provider".\n'
+        'Edit script.json, then run tts.dart, pad.dart and layout.dart again.');
+    exit(1);
+  }
   switch (args.firstOrNull) {
     case 'split':
       split();

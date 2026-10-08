@@ -13,6 +13,7 @@ The write-up with copy-paste prompts: [harksingh.com/posts/harks-ai-voice-clone]
 - [Edit a finished video](#edit-a-finished-video)
 - [API key permissions](#api-key-permissions)
 - [Voice recipe](#voice-recipe)
+- [Local voice](#local-voice)
 - [Subtitles](#subtitles)
 - [Components](#components)
 - [Assets](#assets)
@@ -145,6 +146,19 @@ Tried on the author's clone and dropped:
 | Clones from 2 minutes of one video | Less like the speaker than a 4 minute clone from 2 videos |
 | Pitch post-processing (Praat, Rubber Band) | Matched the numbers but sounded rough and noisy |
 | Chatterbox (local) | Higher pitch, weaker accent, less like the speaker |
+
+## Local voice
+
+Set `tts.provider` to `say` in the config to narrate with macOS `say` in place of ElevenLabs.
+It is free, works offline, and needs no API key.
+`tts.say.voice` names a voice from `say -v '?'`, and `tts.say.rate` sets words a minute.
+The default is `Aman`, a neural Indian English voice; System Settings > Accessibility > Spoken Content adds more.
+
+`tts.dart` voices each line on its own, so line times are exact.
+It writes the same files as the ElevenLabs path, so `pad.dart` and `layout.dart` run unchanged.
+`check.dart` skips the accent and likeness gates for a local voice.
+`retake.dart` refuses a local voice, because a full re-voice is free.
+A new local model, such as Kokoro, is one more case in `localVoice` in `scripts/tts.dart`.
 
 ## Subtitles
 

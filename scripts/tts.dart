@@ -1,12 +1,16 @@
 import 'dart:convert';
 import 'dart:io';
 
-// Voice script.json with the locked recipe in ../voice.json.
+// Voice script.json into public/audio/<scene>.mp3 and src/timings.raw.json.
+// The config's tts.provider picks the voice (no tts block means elevenlabs):
+//   elevenlabs - the cloned voice, with the locked recipe described below
+//   say        - macOS `say`, free and offline, set by tts.say (voice, rate)
+// Every provider writes the same two outputs, so pad.dart and layout.dart run unchanged after it.
 //
-//   dart tts.dart          # every chunk
-//   dart tts.dart reroll   # only chunks holding a scene listed in check/bad.txt, each with its next seed
+//   dart tts.dart          # every scene
+//   dart tts.dart reroll   # elevenlabs only: chunks holding a scene listed in check/bad.txt, each with its next seed
 //
-// Scenes are merged into chunks of up to `chunk_chars` characters, because short requests drift more.
+// ElevenLabs: scenes are merged into chunks of up to `chunk_chars` characters, because short requests drift more.
 // Each chunk is stitched to the ones before it with previous_request_ids (v4 request stitching), so
 // tone and accent carry through the video. Chunks are then cut back into scenes at real silences.
 // Seeds live in src/seeds.json: same text + same seed + same recipe gives back the same take.
@@ -47,14 +51,94 @@ List<List<double>> silences(String file) {
 double probe(String f) =>
     double.parse((Process.runSync('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', f]).stdout as String).trim());
 
+void run(String cmd, List<String> args) {
+  final r = Process.runSync(cmd, args);
+  if (r.exitCode != 0) throw '$cmd failed: ${r.stderr}';
+}
+
 Future<void> main(List<String> args) async {
-  final key = Platform.environment['ELEVENLABS_API_KEY']!;
   final scenes = jsonDecode(File('script.json').readAsStringSync()) as List;
   final todo = [for (final s in scenes) for (final l in s['lines'] as List) if ('${l['say']} ${l['tts'] ?? ''}'.contains('TODO')) '${s['id']}: ${l['say']}'];
   if (todo.isNotEmpty) {
     stderr.writeln('script.json still has TODO lines, so nothing was voiced (no credits spent):\n  ${todo.join('\n  ')}');
     exit(1);
   }
+  final tts = (recipe['tts'] as Map?) ?? const {};
+  final provider = (tts['provider'] ?? 'elevenlabs') as String;
+  if (provider == 'elevenlabs') return elevenlabs(scenes, args);
+  final speak = localVoice(provider, (tts[provider] as Map?) ?? const {});
+  if (speak == null) throw 'unknown tts.provider "$provider" in ${configFile(studio)}: use elevenlabs or say';
+  if (args.firstOrNull == 'reroll') print('reroll only applies to elevenlabs; a local voice gives the same take every time');
+  voiceLocally(scenes, speak, provider);
+}
+
+/// Writes one line of speech to a WAV file.
+typedef Speak = void Function(String text, String wav);
+
+/// Local providers, keyed by tts.provider; each reads its own settings block, tts.<provider>.
+/// A new local model (Kokoro, KittenTTS) is one more case here; voiceLocally does the rest.
+Speak? localVoice(String provider, Map settings) => switch (provider) {
+      'say' => sayVoice((settings['voice'] ?? 'Aman') as String, settings['rate'] as num?),
+      _ => null,
+    };
+
+Speak sayVoice(String voice, num? rate) {
+  // `say` falls back to the system voice without an error, so check the name first.
+  final installed = RegExp(r'^(.+?)\s+[a-z]{2,3}_\w+\s+#', multiLine: true)
+      .allMatches(Process.runSync('say', ['-v', '?']).stdout as String)
+      .map((m) => m[1]!);
+  if (!installed.any((n) => n == voice || n.startsWith('$voice ('))) {
+    throw 'tts.say.voice "$voice" is not installed; `say -v "?"` lists the voices, and System Settings > Accessibility > Spoken Content adds more';
+  }
+  return (text, wav) {
+    final input = File('$wav.txt')..writeAsStringSync(text); // a file, so a line that starts with "-" is not read as a flag
+    run('say', ['-v', voice, if (rate != null) ...['-r', '$rate'], '--file-format=WAVE', '--data-format=LEI16@44100', '-o', wav, '-f', input.path]);
+    input.deleteSync();
+  };
+}
+
+// Silence between lines in a local take; pad.dart finds it and widens it to the video's pace.
+const lineGap = 0.25;
+
+/// Voices each line on its own, so line times are exact, then joins a scene's lines with [lineGap].
+void voiceLocally(List scenes, Speak speak, String provider) {
+  final tmp = Directory.systemTemp.createTempSync('tts');
+  const trim = 'silenceremove=start_periods=1:start_threshold=-60dB:start_silence=0.02';
+  final out = [];
+  for (final s in scenes) {
+    final id = s['id'];
+    final clips = <String>[];
+    final lines = [];
+    var t = 0.0;
+    for (final l in s['lines'] as List) {
+      final raw = '${tmp.path}/raw.wav';
+      speak((l['tts'] ?? l['say']) as String, raw);
+      final clip = '${tmp.path}/${id}_${clips.length}.wav';
+      run('ffmpeg', ['-v', 'error', '-y', '-i', raw, '-af', '$trim,areverse,$trim,areverse', '-ac', '1', '-ar', '44100', clip]);
+      if (clips.isNotEmpty) t += lineGap;
+      final d = probe(clip);
+      lines.add({'say': l['say'], 'start': t, 'end': t + d});
+      t += d;
+      clips.add(clip);
+    }
+    final gaps = [for (var k = 1; k < clips.length; k++) 'anullsrc=r=44100:cl=mono,atrim=duration=$lineGap[g$k];'].join();
+    final parts = [for (var k = 0; k < clips.length; k++) '${k > 0 ? '[g$k]' : ''}[$k:a]'].join();
+    run('ffmpeg', [
+      '-v', 'error', '-y',
+      for (final c in clips) ...['-i', c],
+      '-filter_complex', '$gaps${parts}concat=n=${2 * clips.length - 1}:v=0:a=1[out]',
+      '-map', '[out]', '-c:a', 'libmp3lame', '-q:a', '2', 'public/audio/$id.mp3',
+    ]);
+    out.add({'id': id, 'duration': probe('public/audio/$id.mp3'), 'lines': lines});
+    print('$id: ${lines.length} lines, ${t.toStringAsFixed(1)}s');
+  }
+  tmp.deleteSync(recursive: true);
+  File('src/timings.raw.json').writeAsStringSync(const JsonEncoder.withIndent('  ').convert(out));
+  print('voiced with $provider: no credits spent');
+}
+
+Future<void> elevenlabs(List scenes, List<String> args) async {
+  final key = Platform.environment['ELEVENLABS_API_KEY']!;
   final chunks = chunk(scenes, recipe['chunk_chars'] as int);
   final seedsFile = File('src/seeds.json');
   final seeds = seedsFile.existsSync() ? Map<String, dynamic>.from(jsonDecode(seedsFile.readAsStringSync())) : <String, dynamic>{};
