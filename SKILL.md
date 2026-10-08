@@ -59,8 +59,9 @@ Use the Playwright MCP browser at 1600x900 (`browser_resize`), and let the user 
 Save to `public/shots/<name>.png`.
 Read click targets from `browser_snapshot` with `boxes: true`: those x, y, width, height values are the `box` for `BrowserShot`.
 Leave key-creation forms out, and list secrets (key hints, emails) in `blur`.
+Where a line quotes a value (a time, a count, a price), set the page to show exactly that value before the shot, for example by pausing and seeking a player.
 
-Done when every demo scene has the shots it needs.
+Done when every demo scene has the shots it needs and each quoted value matches its shot.
 
 ## 5. Voice the narration
 
