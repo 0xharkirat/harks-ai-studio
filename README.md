@@ -201,7 +201,8 @@ Explainer pieces, with no SSW branding, are in `template/src/explain.tsx`:
 | Component | Use |
 |---|---|
 | `Diagram` | SVG nodes and labelled arrows that draw on at their cues; nodes can fade to a ghost, glide, or flash |
-| `CodeWalk` | A code block that lights the lines each cue names and dims the rest |
+| `CodeWalk` | A code block that lights the lines each cue names and dims the rest; `start` and `added` show a diff hunk's own line numbers and its new lines |
+| `Checklist` | The "what to check" list that closes a change video, 1 item per cue |
 | `Title`, `Heading` | A centred title card, and a corner label for the scene's one idea |
 | `within(cue, ends, i, f)` | The frame part way through a line, for a part the narration names mid-sentence |
 

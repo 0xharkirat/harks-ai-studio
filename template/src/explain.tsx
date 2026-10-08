@@ -251,20 +251,26 @@ export const Diagram: React.FC<{nodes: DiagramNode[]; edges?: DiagramEdge[]; wid
   );
 };
 
-/** Lines to light up from frame `at`; line numbers start at 1. */
+/** Lines to light up from frame `at`, by the numbers the block shows: from 1, or from CodeWalk's `start`. */
 export type CodeStep = {at: number; lines: number[]};
 
-/** A code block that lights the lines each step names and dims the rest; `#` and `//` comments show muted. */
-export const CodeWalk: React.FC<{code: string; steps: CodeStep[]; title?: string; at?: number; width?: number; fontSize?: number; tone?: Tone; style?: React.CSSProperties}> = ({
-  code,
-  steps,
-  title,
-  at = 0,
-  width = 1100,
-  fontSize = 32,
-  tone = 'yellow',
-  style,
-}) => {
+/**
+ * A code block that lights the lines each step names and dims the rest; `#` and `//` comments show muted.
+ * For a diff, `start` numbers the rows from the file's own line number, and `added` marks new lines with a green +.
+ * scripts/hunk.dart prints both from a hunk.
+ */
+export const CodeWalk: React.FC<{
+  code: string;
+  steps: CodeStep[];
+  title?: string;
+  at?: number;
+  start?: number;
+  added?: number[];
+  width?: number;
+  fontSize?: number;
+  tone?: Tone;
+  style?: React.CSSProperties;
+}> = ({code, steps, title, at = 0, start = 1, added = [], width = 1100, fontSize = 32, tone = 'yellow', style}) => {
   const frame = useCurrentFrame();
   const p = useIn(at);
   const rows = code.replace(/^\n+|\s+$/g, '').split('\n');
@@ -274,7 +280,7 @@ export const CodeWalk: React.FC<{code: string; steps: CodeStep[]; title?: string
   });
   const t = k >= 0 ? interpolate(frame, [steps[k].at, steps[k].at + 10], [0, 1], clamp) : 1;
   // Before the first step every line reads normally; from then on the step's lines light up and the rest dim.
-  const look = (i: number, step: number) => (step < 0 ? {lit: 0, o: 1} : steps[step].lines.includes(i + 1) ? {lit: 1, o: 1} : {lit: 0, o: 0.35});
+  const look = (i: number, step: number) => (step < 0 ? {lit: 0, o: 1} : steps[step].lines.includes(start + i) ? {lit: 1, o: 1} : {lit: 0, o: 0.35});
   const color = c[tone];
   return (
     <div
@@ -298,10 +304,17 @@ export const CodeWalk: React.FC<{code: string; steps: CodeStep[]; title?: string
           const lit = from.lit + (to.lit - from.lit) * t;
           const cut = row.search(/(^|\s)(#|\/\/)/);
           return (
-            <div key={i} style={{position: 'relative', display: 'flex', fontFamily: mono, fontSize, lineHeight: 1.6, whiteSpace: 'pre', opacity: from.o + (to.o - from.o) * t}}>
+            // No ligatures: "==" and "=>" show as the characters the file holds.
+            <div
+              key={i}
+              style={{position: 'relative', display: 'flex', fontFamily: mono, fontSize, fontVariantLigatures: 'none', lineHeight: 1.6, whiteSpace: 'pre', opacity: from.o + (to.o - from.o) * t}}
+            >
               <div style={{position: 'absolute', inset: 0, background: color, opacity: 0.13 * lit}} />
               <div style={{position: 'absolute', left: 0, top: 0, bottom: 0, width: 6, background: color, opacity: lit}} />
-              <div style={{position: 'relative', flexShrink: 0, width: 84, paddingRight: 28, textAlign: 'right', color: c.muted}}>{i + 1}</div>
+              <div style={{position: 'relative', flexShrink: 0, width: 84, paddingRight: 28, textAlign: 'right', color: c.muted}}>
+                {start + i}
+                {added.includes(start + i) && <span style={{position: 'absolute', right: 4, color: c.green}}>+</span>}
+              </div>
               <div style={{position: 'relative', color: c.text}}>
                 {cut < 0 ? row : row.slice(0, cut)}
                 {cut >= 0 && <span style={{color: c.muted, fontStyle: 'italic'}}>{row.slice(cut)}</span>}
@@ -313,3 +326,32 @@ export const CodeWalk: React.FC<{code: string; steps: CodeStep[]; title?: string
     </div>
   );
 };
+
+const CheckItem: React.FC<{text: string; at: number}> = ({text, at}) => {
+  const p = useIn(at);
+  return (
+    <div style={{display: 'flex', alignItems: 'flex-start', gap: 32, opacity: p, transform: `translateX(${(1 - p) * 24}px)`}}>
+      <div style={{flexShrink: 0, width: 36, height: 36, marginTop: 8, borderRadius: 8, border: `4px solid ${c.blue}`}} />
+      <div style={{fontFamily: sans, fontWeight: 500, fontSize: 42, lineHeight: 1.35, color: c.text}}>
+        {text.split('`').map((part, k) =>
+          k % 2 ? (
+            <span key={k} style={{fontFamily: mono, fontSize: 38, color: c.yellow}}>
+              {part}
+            </span>
+          ) : (
+            part
+          ),
+        )}
+      </div>
+    </div>
+  );
+};
+
+/** The "what to check" list that closes a change video: each item lands on its cue beside an empty box. `Code` in backticks shows in mono. */
+export const Checklist: React.FC<{items: {text: string; at: number}[]; style?: React.CSSProperties}> = ({items, style}) => (
+  <div style={{position: 'absolute', left: 200, top: 240, width: 1520, display: 'flex', flexDirection: 'column', gap: 48, ...style}}>
+    {items.map((item, i) => (
+      <CheckItem key={i} {...item} />
+    ))}
+  </div>
+);
