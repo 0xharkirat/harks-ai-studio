@@ -1,0 +1,97 @@
+[
+  {
+    "id": "intro",
+    "lines": [
+      {
+        "say": "This commit adds a switch that picks the narrator of a video."
+      },
+      {
+        "say": "The new choice is the say command in macOS, free and offline.",
+        "tts": "The new choice is the say command in mac O S, free and offline."
+      }
+    ]
+  },
+  {
+    "id": "change",
+    "lines": [
+      {
+        "say": "Before, tts.dart sends every line to ElevenLabs.",
+        "tts": "Before, T T S dot dart sends every line to Eleven Labs."
+      },
+      {
+        "say": "That needs an API key, and every video costs credits.",
+        "tts": "That needs an A P I key, and every video costs credits."
+      },
+      {
+        "say": "Now tts.dart reads tts.provider from the config, and elevenlabs is the default.",
+        "tts": "Now T T S dot dart reads T T S dot provider from the config, and Eleven Labs is the default."
+      },
+      {
+        "say": "Set it to say, and this Mac reads the lines for free."
+      }
+    ]
+  },
+  {
+    "id": "flow",
+    "lines": [
+      {
+        "say": "Take 1 line from the rebase video: Main has commits A and B.",
+        "tts": "Take one line from the rebase video: Main has commits A and B."
+      },
+      {
+        "say": "The say command speaks that line alone, into a WAV file.",
+        "tts": "The say command speaks that line alone, into a wave file."
+      },
+      {
+        "say": "ffmpeg trims the silence at each end, and 1.39 seconds are left.",
+        "tts": "F F M peg trims the silence at each end, and one point three nine seconds are left."
+      },
+      {
+        "say": "tts.dart joins the clips and writes each line's start and end.",
+        "tts": "T T S dot dart joins the clips and writes each line's start and end."
+      },
+      {
+        "say": "ElevenLabs makes the same files, so pad.dart and layout.dart do not change.",
+        "tts": "Eleven Labs makes the same files, so pad dot dart and layout dot dart do not change."
+      }
+    ]
+  },
+  {
+    "id": "code",
+    "lines": [
+      {
+        "say": "In main, a missing provider means elevenlabs, and that path returns early.",
+        "tts": "In main, a missing provider means Eleven Labs, and that path returns early."
+      },
+      {
+        "say": "Any other name goes to localVoice, and an unknown name stops the run.",
+        "tts": "Any other name goes to local voice, and an unknown name stops the run."
+      },
+      {
+        "say": "localVoice maps say to a voice, Aman by default.",
+        "tts": "Local voice maps say to a voice, Aman by default."
+      },
+      {
+        "say": "A new local model, such as Kokoro, is 1 more case here.",
+        "tts": "A new local model, such as Kokoro, is one more case here."
+      }
+    ]
+  },
+  {
+    "id": "checks",
+    "lines": [
+      {
+        "say": "Check that a config with no tts block still voices with ElevenLabs.",
+        "tts": "Check that a config with no T T S block still voices with Eleven Labs."
+      },
+      {
+        "say": "Check that a wrong voice name stops tts.dart, because say falls back in silence.",
+        "tts": "Check that a wrong voice name stops T T S dot dart, because say falls back in silence."
+      },
+      {
+        "say": "Check that check.dart still runs the accent and likeness gates for a clone.",
+        "tts": "Check that check dot dart still runs the accent and likeness gates for a clone."
+      }
+    ]
+  }
+]

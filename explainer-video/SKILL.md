@@ -1,6 +1,6 @@
 ---
 name: explainer-video
-description: Make a 3Blue1Brown-style explainer video on any topic, with diagrams and code that build up in sync with a local text-to-speech narration, rendered with Remotion. Use for "explainer video on X", "explain X in a video", or a 3b1b-style animation of how something works.
+description: Make a 3Blue1Brown-style explainer video on any topic, with diagrams and code that build up in sync with a local text-to-speech narration, rendered with Remotion. Use for "explainer video on X", "explain X in a video", a 3b1b-style animation of how something works, or a change video that walks a reviewer through a commit, git range, or PR diff.
 ---
 
 # Explainer video
@@ -8,6 +8,7 @@ description: Make a 3Blue1Brown-style explainer video on any topic, with diagram
 The studio is the parent of this skill's base directory; from a shell, `STUDIO=$(cd -P ~/.claude/skills/explainer-video/.. && pwd)`.
 It is the done-video studio: `$STUDIO/README.md` is the reference for Local voice, Subtitles, and Components.
 The narration is free and offline: macOS `say`, with the voice in `tts.say` of the project's `src/config.json`.
+For a change video of a commit, a git range, or a PR diff, also follow [`CHANGE.md`](CHANGE.md).
 
 ## 1. Plan the idea
 

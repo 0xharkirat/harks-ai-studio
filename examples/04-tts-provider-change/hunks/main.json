@@ -1,0 +1,9 @@
+{
+  "title": "scripts/tts.dart",
+  "start": 66,
+  "code": "final tts = (recipe['tts'] as Map?) ?? const {};\nfinal provider = (tts['provider'] ?? 'elevenlabs') as String;\nif (provider == 'elevenlabs') return elevenlabs(scenes, args);\nfinal speak = localVoice(provider, (tts[provider] as Map?) ?? const {});\nif (speak == null) throw 'unknown tts.provider \"$provider\" in ${configFile(studio)}: use elevenlabs…\nif (args.firstOrNull == 'reroll') print('reroll only applies to elevenlabs; a local voice gives the…\nvoiceLocally(scenes, speak, provider);",
+  "added": [66, 67, 68, 69, 70, 71, 72],
+  "runs": [
+    [66, 67, 68, 69, 70, 71, 72]
+  ]
+}

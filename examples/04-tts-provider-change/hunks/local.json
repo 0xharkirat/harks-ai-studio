@@ -1,0 +1,9 @@
+{
+  "title": "scripts/tts.dart",
+  "start": 80,
+  "code": "Speak? localVoice(String provider, Map settings) => switch (provider) {\n      'say' => sayVoice((settings['voice'] ?? 'Aman') as String, settings['rate'] as num?),\n      _ => null,\n    };",
+  "added": [80, 81, 82, 83],
+  "runs": [
+    [80, 81, 82, 83]
+  ]
+}

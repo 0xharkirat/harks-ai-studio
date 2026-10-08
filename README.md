@@ -102,6 +102,16 @@ make an explainer video on how git rebase replays commits
 
 The `explainer-video` skill follows [`explainer-video/SKILL.md`](explainer-video/SKILL.md), and `examples/03-git-rebase-explainer/` is the result.
 
+The same skill makes a change video: a 60-90 s walk-through of 1 code change, for a reviewer.
+
+```text
+make a change video for commit ddb49c2
+```
+
+It adds [`explainer-video/CHANGE.md`](explainer-video/CHANGE.md): a before/after diagram, 1 example end to end, the hunks that matter, and what to check.
+`scripts/hunk.dart` turns a hunk from `git diff` or `gh pr diff` into `CodeWalk` data.
+`examples/04-tts-provider-change/` is the result.
+
 ## Edit a finished video
 
 Change only the lines that need it, without re-voicing the rest.
