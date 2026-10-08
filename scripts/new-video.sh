@@ -17,6 +17,18 @@ cp -R $studio/template/. $dir/
 cp -R $studio/assets/sfx $studio/assets/music $dir/public/
 [[ -n $portrait ]] && cp $portrait $dir/public/portrait.jpg
 cp $config $dir/src/config.json   # the recipe this video was made with; the voice tools read it
-cd $dir && dart $studio/scripts/fill.dart && npm ci --no-audit --no-fund
+cd $dir
+dart $studio/scripts/fill.dart
+# An earlier video with the same lock file lends its node_modules: a copy-on-write clone is instant and offline.
+donor=''
+for p in $studio/videos/*/project(N/); do
+  [[ -d $p/node_modules ]] && cmp -s $p/package-lock.json package-lock.json && { donor=$p; break; }
+done
+if [[ -n $donor ]]; then
+  cp -cR $donor/node_modules . 2>/dev/null || cp -R $donor/node_modules .
+  rm -rf node_modules/.cache   # the donor's bundler cache; this video builds its own
+else
+  npm ci --no-audit --no-fund
+fi
 trap - ERR
 echo "Ready: $dir"
