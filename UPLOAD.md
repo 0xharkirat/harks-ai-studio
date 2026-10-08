@@ -49,7 +49,7 @@ Live: <https URL>
 
 <1-3 hashtags>
 
-Voice: AI clone of <speaker.person> (ElevenLabs <model_id>). Script, edit and render: Claude Code + Remotion. Music and sound effects: ElevenLabs.
+Voice: AI clone of <speaker.person> (ElevenLabs <model_id>). Script, edit and render: Claude Code + Remotion. Music: ElevenLabs. Sound effects: <the sources in assets/sfx/sources.json of the sounds this video uses>.
 
 <version> - <speaker.person_first> / Claude Code
 
