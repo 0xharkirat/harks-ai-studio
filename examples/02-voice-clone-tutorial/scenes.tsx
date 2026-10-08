@@ -4,7 +4,7 @@ import React from 'react';
 import {AbsoluteFill, Img, interpolate, staticFile, useCurrentFrame} from 'remotion';
 import {Appear, Backdrop, Between, BrowserShot, c, Chip, Header, LowerThird, mono, PermissionPicker, PermRow, sans, SswTag, Terminal, useIn} from './ui';
 
-export type SceneProps = {cue: number[]; frames: number};
+export type SceneProps = {cue: number[]; ends: number[]; frames: number};
 
 const Photo: React.FC<{frames: number; dim?: number}> = ({frames, dim = 0}) => {
   const frame = useCurrentFrame();
