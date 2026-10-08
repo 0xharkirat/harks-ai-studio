@@ -103,6 +103,8 @@ Done when loudness reads about -16 LUFS and the frame sheet shows every scene; e
 
 ## 8. Deliver
 
-Copy `out/video.mp4` to `videos/NN-short-name/<title>.mp4`, open it for the user, and give them the path.
-When replacing a copy the user may have open, close it in the player first (`osascript -e 'tell application "QuickTime Player" to close (every document whose name contains "<title>") saving no'`); a file overwritten while open plays as one frozen frame with no sound.
+Every render is a new version: copy `out/video.mp4` to `videos/NN-short-name/<title> vN.mp4`, with N one above the highest version in the folder (`v1` for the first).
+Then rename each older version to start with `zz ` (`zz <title> v1.mp4`), so the newest sorts first.
+Delivered files are permanent: a delivered `.mp4` is never overwritten, and only the user deletes the `zz` ones, when they ask.
+Open the new version for the user and give them its path.
 The YouTube upload waits for "test pass"; [`UPLOAD.md`](UPLOAD.md) builds its title, description, and settings.
