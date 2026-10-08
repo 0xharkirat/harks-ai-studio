@@ -6,6 +6,8 @@ const fps = 30;
 
 void main() {
   final t = jsonDecode(File('src/timings.json').readAsStringSync()) as List;
+  // A scene's optional "hold" in script.json adds silent seconds after its last line, e.g. to let a recorded clip play.
+  final hold = {for (final s in jsonDecode(File('script.json').readAsStringSync()) as List) s['id']: (s['hold'] as num?)?.toDouble() ?? 0.0};
   var cursor = 0.0;
   final scenes = [];
   final filter = StringBuffer();
@@ -13,7 +15,7 @@ void main() {
   for (var i = 0; i < t.length; i++) {
     final s = t[i];
     final lead = i == 0 ? 1.2 : 0.3; // SSW: smile for a beat before speaking
-    final tail = i == t.length - 1 ? 2.2 : 0.45;
+    final tail = (i == t.length - 1 ? 2.2 : 0.45) + (hold[s['id']] ?? 0.0);
     final total = lead + s['duration'] + tail;
     scenes.add({
       'id': s['id'],

@@ -6,10 +6,10 @@ import {Appear, at, Backdrop, c, Chip, Header, IntroCard, OutroCard, sans, SswTa
 const who = config.speaker;
 const nameBar = who.person ? `AI voice of ${who.person}${who.title ? ` · ${who.title}` : ''}` : 'AI voice';
 
-export type SceneProps = {cue: number[]; frames: number};
+export type SceneProps = {cue: number[]; ends: number[]; frames: number};
 
 // One component per scene id in script.json, named with a capital first letter (intro -> Intro).
-// cue[i] is the frame where line i starts; at(cue, i) is the safe version.
+// cue[i] is the frame where line i starts, ends[i] where it stops; at(cue, i) is the safe version.
 // Richer scenes (real screenshots with clicks, permission pickers): see examples/02-voice-clone-tutorial/scenes.tsx.
 
 const PBI = {

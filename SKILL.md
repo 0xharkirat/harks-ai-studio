@@ -60,6 +60,7 @@ Save to `public/shots/<name>.png`.
 Read click targets from `browser_snapshot` with `boxes: true`: those x, y, width, height values are the `box` for `BrowserShot`.
 Leave key-creation forms out, and list secrets (key hints, emails) in `blur`.
 Where a line quotes a value (a time, a count, a price), set the page to show exactly that value before the shot, for example by pausing and seeking a player.
+Where the demo is something playing (a video, an animation), record it instead: a CDP `Page.startScreencast` of the same 1600x900 view from the click onward, built into a 30 fps `public/clips/<name>.mp4`, with its first frame saved as the shot.
 
 Done when every demo scene has the shots it needs and each quoted value matches its shot.
 
@@ -81,7 +82,10 @@ Done when `check/bad.txt` is empty and `src/layout.json` exists.
 
 In `src/scenes.tsx`, export one component per scene id with a capital first letter (`demo` -> `Demo`).
 Use `IntroCard` and `OutroCard` as they are; build demo scenes from `BrowserShot`, `Terminal`, `PermissionPicker`, `SswTag`, and `Chip` in `src/ui.tsx`.
-`cue[i]` is the frame line `i` starts; use `at(cue, i)`.
+`cue[i]` is the frame line `i` starts and `ends[i]` the frame it stops; use `at(cue, i)`.
+A recorded clip goes in `BrowserShot`'s `clip`, starting on the click frame; give that scene `"hold": <seconds>` in `script.json` and rerun `layout.dart`, so it plays with the narration silent.
+Mark good and bad examples with the one `SswTag` lower third: `✅ Good example` or `❌ Bad example` in `lead`, and `sound="good"` or `sound="bad"`.
+For a sound effect `assets/sfx/` lacks, find a free one on YouTube first (`yt-dlp --flat-playlist "ytsearch10:<effect> sound effect no copyright"`), pick one whose title or description allows free use, download the audio only (`yt-dlp -f bestaudio -x --audio-format wav <url>`), trim it to the hit at -20 LUFS, and add its URL and licence line to `assets/sfx/sources.json`; ElevenLabs sound effects are the fallback when nothing fits.
 `examples/02-voice-clone-tutorial/scenes.tsx` shows every component in use.
 Check frames with `npx remotion still src/index.ts Video out/s.png --frame=<n>`.
 

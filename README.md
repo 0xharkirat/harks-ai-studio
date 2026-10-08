@@ -179,7 +179,7 @@ All in `template/src/ui.tsx`:
 | `assets/voice/sources.json` | Which public videos and seconds your voice clips come from; `fetch-voice.sh` rebuilds them |
 | `assets/voice/*.mp3`, `assets/voice/reference/*.mp3` | Your training and held-out clips; never committed |
 | `speaker.portrait` in your config | Optional photo for intros, outros, and the camera box; never committed |
-| `assets/sfx/` | Typewriter loop and mouse click, from ElevenLabs sound effects |
+| `assets/sfx/` | Typewriter loop and mouse click from ElevenLabs sound effects; good-example ding and bad-example buzzer from free YouTube uploads. `sources.json` lists where each came from |
 | `assets/music/minimal_lofi_bed_4min.mp3` | A 4 minute quiet bed from ElevenLabs music |
 
 They ship with the repo, so nothing has to be generated.

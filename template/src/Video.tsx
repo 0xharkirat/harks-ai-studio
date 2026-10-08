@@ -53,10 +53,11 @@ export const Video: React.FC<{voice?: boolean}> = ({voice = true}) => {
       {layout.scenes.map((s) => {
         const Scene = sceneFor(s.id);
         const cue = s.lines.map((l) => l.start - s.from);
+        const ends = s.lines.map((l) => l.end - s.from);
         return (
           <Sequence key={s.id} from={s.from} durationInFrames={s.frames} name={s.id}>
             <Fade frames={s.frames}>
-              <Scene cue={cue} frames={s.frames} />
+              <Scene cue={cue} ends={ends} frames={s.frames} />
             </Fade>
           </Sequence>
         );

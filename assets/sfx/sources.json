@@ -1,0 +1,24 @@
+[
+  {
+    "file": "good_example.wav",
+    "use": "SswTag sound=\"good\" (✅ Good example)",
+    "source": "https://www.youtube.com/watch?v=boaUpTtZUgA",
+    "title": "Correct Ding - Sound effect (HD), HighQualitySFX",
+    "licence": "Description: \"Feel free to download and use in your content\"",
+    "cut": "1.84 s for 1.0 s, 0.15 s fade out, -20 LUFS"
+  },
+  {
+    "file": "bad_example.wav",
+    "use": "SswTag sound=\"bad\" (❌ Bad example)",
+    "source": "https://www.youtube.com/watch?v=t_S2nuo8PRA",
+    "title": "FREE Wrong Answer Buzzer Sound Effect SFX Royalty Free No Copyright, Producer Fix",
+    "licence": "Title: \"Royalty Free No Copyright\"",
+    "cut": "0.69 s for 1.2 s, 0.2 s fade out, -20 LUFS"
+  },
+  {
+    "file": "mouse_click.wav, typewriter_loop.wav",
+    "use": "BrowserShot clicks, Terminal typing",
+    "source": "ElevenLabs sound effects",
+    "licence": "Generated with the account's ElevenLabs plan"
+  }
+]

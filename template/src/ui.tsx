@@ -1,5 +1,5 @@
 import React from 'react';
-import {AbsoluteFill, Audio, Img, interpolate, Sequence, spring, staticFile, useCurrentFrame, useVideoConfig} from 'remotion';
+import {AbsoluteFill, Audio, Img, interpolate, OffthreadVideo, Sequence, spring, staticFile, useCurrentFrame, useVideoConfig} from 'remotion';
 import {loadFont as loadInter} from '@remotion/google-fonts/Inter';
 import {loadFont as loadMono} from '@remotion/google-fonts/JetBrainsMono';
 import {useAudioData, visualizeAudio} from '@remotion/media-utils';
@@ -30,6 +30,8 @@ export const c = {
 export const sfx = {
   type: {src: 'sfx/typewriter_loop.wav', volume: 0.32},
   click: {src: 'sfx/mouse_click.wav', volume: 0.45},
+  good: {src: 'sfx/good_example.wav', volume: 0.5},
+  bad: {src: 'sfx/bad_example.wav', volume: 0.5},
 };
 
 export type Line = {say: string; start: number; end: number};
@@ -105,8 +107,8 @@ export const LowerThird: React.FC<{at: number; name: string; title: string; styl
   </div>
 );
 
-/** "✅ Good example - ...", "❌ Bad example - ..." and "LEARN MORE link" tags. */
-export const SswTag: React.FC<{at: number; lead?: string; text: string; style?: React.CSSProperties}> = ({at, lead, text, style}) => (
+/** "✅ Good example - ...", "❌ Bad example - ..." and "LEARN MORE link" tags; `sound` plays a cue as the tag lands. */
+export const SswTag: React.FC<{at: number; lead?: string; text: string; sound?: keyof typeof sfx; style?: React.CSSProperties}> = ({at, lead, text, sound, style}) => (
   <div style={{position: 'absolute', left: 0, ...style}}>
     <SswBar at={at} padY={12}>
       <div style={{fontFamily: ssw, fontWeight: 700, fontSize: 32, color: '#111', whiteSpace: 'nowrap'}}>
@@ -114,6 +116,11 @@ export const SswTag: React.FC<{at: number; lead?: string; text: string; style?: 
         {text}
       </div>
     </SswBar>
+    {sound && (
+      <Sequence from={at} durationInFrames={45} layout="none">
+        <Audio src={staticFile(sfx[sound].src)} volume={sfx[sound].volume} />
+      </Sequence>
+    )}
   </div>
 );
 
@@ -230,20 +237,25 @@ export const Cursor: React.FC<{x: number; y: number; press: number}> = ({x, y, p
   </svg>
 );
 
+/** A screen recording the same size as the shot, played over it from frame `at` (scene-relative); its first frame should match the shot. */
+export type ShotClip = {src: string; at: number; volume?: number | ((f: number) => number)};
+
 /**
  * Real screenshot in a browser frame. The cursor glides to each step's box,
  * clicks with sound when asked, and the box gets a red highlight.
+ * An optional `clip` swaps the still for a live recording, so a click can start real playback.
  */
 export const BrowserShot: React.FC<{
   src: string;
   url: string;
   steps: ShotStep[];
   blur?: Box[];
+  clip?: ShotClip;
   at?: number;
   width?: number;
   shot?: [number, number];
   style?: React.CSSProperties;
-}> = ({src, url, steps, blur = [], at = 0, width = 1300, shot = [1600, 900], style}) => {
+}> = ({src, url, steps, blur = [], clip, at = 0, width = 1300, shot = [1600, 900], style}) => {
   const frame = useCurrentFrame();
   const {fps} = useVideoConfig();
   const p = useIn(at);
@@ -279,6 +291,11 @@ export const BrowserShot: React.FC<{
       <div style={{width, height, position: 'relative', overflow: 'hidden', borderRadius: '0 0 14px 14px', boxShadow: '0 30px 80px rgba(0,0,0,0.5)'}}>
         <div style={{position: 'absolute', inset: 0, transform: `scale(${z})`, transformOrigin: `${focus[0]}px ${focus[1]}px`}}>
           <Img src={staticFile(src)} style={{width, height, display: 'block'}} />
+          {clip && (
+            <Sequence from={clip.at} layout="none">
+              <OffthreadVideo src={staticFile(clip.src)} volume={clip.volume} style={{position: 'absolute', left: 0, top: 0, width, height}} />
+            </Sequence>
+          )}
           {blur.map((b, i) => (
             <div key={i} style={{position: 'absolute', left: b[0] * k, top: b[1] * k, width: b[2] * k, height: b[3] * k, backdropFilter: 'blur(9px)', background: 'rgba(255,255,255,0.35)', borderRadius: 4}} />
           ))}
