@@ -25,6 +25,10 @@ export const c = {
   redSoft: 'rgba(204,65,65,0.16)',
   green: '#3FB950',
   amber: '#E3A33B',
+  // Explainer accents, after the 3Blue1Brown palette
+  blue: '#58C4DD',
+  yellow: '#F4D345',
+  teal: '#5CD0B3',
 };
 
 export const sfx = {

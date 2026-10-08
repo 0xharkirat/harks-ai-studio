@@ -186,6 +186,15 @@ All in `template/src/ui.tsx`:
 | `Captions` | Burned-in subtitles |
 | `Header`, `Chip`, `Appear`, `Between`, `Backdrop` | Titles, chips, and timed reveals |
 
+Explainer pieces, with no SSW branding, are in `template/src/explain.tsx`:
+
+| Component | Use |
+|---|---|
+| `Diagram` | SVG nodes and labelled arrows that draw on at their cues; nodes can fade to a ghost, glide, or flash |
+| `CodeWalk` | A code block that lights the lines each cue names and dims the rest |
+| `Title`, `Heading` | A centred title card, and a corner label for the scene's one idea |
+| `within(cue, ends, i, f)` | The frame part way through a line, for a part the narration names mid-sentence |
+
 ## Assets
 
 | Path | What |
