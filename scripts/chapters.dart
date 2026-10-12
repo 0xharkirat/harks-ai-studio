@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 // Print YouTube chapter lines from src/layout.json, one per scene.
-// Label: the scene's "chapter" in script.json, else Intro / Recap / the capitalised id.
+// Label: the scene's "chapter" in script.json, else Intro / Summary / the capitalised id.
 void main() {
   final layout = jsonDecode(File('src/layout.json').readAsStringSync());
   final script = jsonDecode(File('script.json').readAsStringSync()) as List;
@@ -14,7 +14,7 @@ void main() {
   for (var i = 0; i < scenes.length; i++) {
     final s = scenes[i];
     final id = s['id'] as String;
-    final label = labels[id] ?? {'intro': 'Intro', 'outro': 'Recap'}[id] ?? id[0].toUpperCase() + id.substring(1);
+    final label = labels[id] ?? {'intro': 'Intro', 'outro': 'Summary'}[id] ?? id[0].toUpperCase() + id.substring(1);
     final from = (s['from'] as int) ~/ fps;
     final end = i + 1 < scenes.length ? scenes[i + 1]['from'] as int : total;
     if ((end - (s['from'] as int)) / fps < 10) short.add(label);

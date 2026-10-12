@@ -2,12 +2,9 @@ import React from 'react';
 import {AbsoluteFill, Audio, Img, interpolate, OffthreadVideo, Sequence, spring, staticFile, useCurrentFrame, useVideoConfig} from 'remotion';
 import {loadFont as loadInter} from '@remotion/google-fonts/Inter';
 import {loadFont as loadMono} from '@remotion/google-fonts/JetBrainsMono';
-import {useAudioData, visualizeAudio} from '@remotion/media-utils';
 import {toCues} from './captions';
 import config from './config.json'; // the project's config snapshot, written by new-video.sh
-
-// The portrait is optional: without one, intros are a clean title card and there is no camera box.
-export const hasPortrait = Boolean(config.speaker.portrait);
+import {hasPuppet, Puppet, useVoiceLevel} from './puppet';
 
 export const sans = loadInter('normal', {weights: ['400', '500', '600', '700', '800'], subsets: ['latin']}).fontFamily;
 export const mono = loadMono('normal', {weights: ['400', '600'], subsets: ['latin']}).fontFamily;
@@ -36,6 +33,8 @@ export const sfx = {
   click: {src: 'sfx/mouse_click.wav', volume: 0.45},
   good: {src: 'sfx/good_example.wav', volume: 0.5},
   bad: {src: 'sfx/bad_example.wav', volume: 0.5},
+  whoosh: {src: 'sfx/whoosh.wav', volume: 0.35},
+  reveal: {src: 'sfx/reveal.wav', volume: 0.45},
 };
 
 export type Line = {say: string; start: number; end: number};
@@ -335,25 +334,39 @@ export const BrowserShot: React.FC<{
   );
 };
 
-/** Bottom-right camera box, like SSW TV, with the AI disclosure and a voice meter. */
-export const PiP: React.FC = () => {
-  if (!hasPortrait) return null;
-  return <PortraitBox />;
+/**
+ * Bottom-right camera box, like SSW TV: the speaker's talking puppet, the AI disclosure, and a voice meter.
+ * `simple` is the short-video look: the puppet in a red border whose glow follows the voice.
+ * There is no camera box without a puppet (speaker.puppet in the config).
+ */
+export const PiP: React.FC<{simple?: boolean}> = ({simple = false}) => {
+  if (!hasPuppet) return null;
+  return simple ? <GlowBox /> : <NamedBox />;
 };
 
-const PortraitBox: React.FC = () => {
-  const frame = useCurrentFrame();
-  const {fps} = useVideoConfig();
-  const audio = useAudioData(staticFile('narration.wav'));
-  let level = 0;
-  if (audio) {
-    const v = visualizeAudio({fps, frame, audioData: audio, numberOfSamples: 32});
-    level = Math.min(1, (v.slice(0, 12).reduce((a, b) => a + b, 0) / 12) * 6);
-  }
+// Averaged over 3 frames so the glow breathes with the words instead of flickering.
+const GlowBox: React.FC = () => {
+  const level = useVoiceLevel(3);
+  return (
+    <div
+      style={{
+        position: 'absolute', right: 56, bottom: 56, width: 300, height: 300, overflow: 'hidden', border: `5px solid ${c.red}`,
+        // Kept very subtle: a soft halo that swells a little on loud words, never a flashing ring.
+        boxShadow: `0 0 ${8 + 16 * level}px ${1 + 3 * level}px rgba(204,65,65,${0.18 + 0.27 * level}), 0 20px 50px rgba(0,0,0,0.55)`,
+      }}
+    >
+      <Puppet size={300} />
+    </div>
+  );
+};
+
+// The long-video box: the AI VOICE tag, the narrator's name, and a voice meter over the puppet.
+const NamedBox: React.FC = () => {
+  const level = useVoiceLevel();
   const bars = [0.6, 1, 0.75, 0.9, 0.5];
   return (
     <div style={{position: 'absolute', right: 48, bottom: 48, width: 320, height: 320, overflow: 'hidden', boxShadow: '0 20px 50px rgba(0,0,0,0.55)'}}>
-      <Img src={staticFile('portrait.jpg')} style={{position: 'absolute', width: 940, left: -282, top: -22}} />
+      <Puppet size={320} />
       <div style={{position: 'absolute', left: 0, right: 0, bottom: 0, height: 8, background: c.red}} />
       <div style={{position: 'absolute', left: 0, right: 0, bottom: 8, padding: '28px 14px 10px', background: 'linear-gradient(transparent, rgba(0,0,0,0.8))', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between'}}>
         <div style={{fontFamily: ssw, fontWeight: 800, color: 'white', fontSize: 24}}>{config.speaker.ai_name.toUpperCase()}</div>
@@ -474,19 +487,6 @@ export const PermissionPicker: React.FC<{rows: PermRow[]; at: number; every?: nu
 /** Frame where line i starts; falls back to the last line so short scenes never get NaN timings. */
 export const at = (cue: number[], i: number) => cue[Math.min(i, cue.length - 1)] ?? 0;
 
-/** Full-screen portrait with a slow push-in, for intros and outros. */
-export const Photo: React.FC<{frames: number; dim?: number; src?: string}> = ({frames, dim = 0, src = 'portrait.jpg'}) => {
-  const frame = useCurrentFrame();
-  const scale = interpolate(frame, [0, frames], [1.04, 1.12]);
-  if (!hasPortrait) return <Backdrop />;
-  return (
-    <AbsoluteFill>
-      <Img src={staticFile(src)} style={{width: '100%', height: '100%', objectFit: 'cover', transform: `scale(${scale})`}} />
-      <AbsoluteFill style={{background: `linear-gradient(90deg, rgba(0,0,0,${dim}) 0%, rgba(0,0,0,${dim * 0.3}) 55%, transparent 100%)`}} />
-    </AbsoluteFill>
-  );
-};
-
 /** Top-right disclosure pill. Keep it on every intro and outro. */
 export const AiBadge: React.FC<{at: number; text?: string}> = ({at: from, text = 'AI voice · made with Claude Code + ElevenLabs'}) => {
   const p = useIn(from);
@@ -504,32 +504,50 @@ export const AiBadge: React.FC<{at: number; text?: string}> = ({at: from, text =
   );
 };
 
-/** SSW intro: portrait, AI badge, name lower third, then a "Today" lower third from the given line. */
-export const IntroCard: React.FC<{cue: number[]; frames: number; name: string; title: string; today: string; todayAt?: number}> = ({
-  cue, frames, name, title, today, todayAt = 1,
+/** Big product tag and title on the backdrop: the intro picture. */
+const Headline: React.FC<{tag: string; title: string}> = ({tag, title}) => (
+  <div style={{position: 'absolute', left: 96, top: 300, width: 1400}}>
+    <Appear at={4}>
+      <div style={{display: 'inline-block', background: c.red, color: 'white', fontFamily: ssw, fontWeight: 800, fontSize: 28, letterSpacing: 2.5, padding: '10px 20px', textTransform: 'uppercase'}}>
+        {tag}
+      </div>
+    </Appear>
+    <Appear at={12}>
+      <div style={{fontFamily: sans, fontWeight: 800, fontSize: 84, color: c.text, letterSpacing: -2, lineHeight: 1.08, marginTop: 28}}>{title}</div>
+    </Appear>
+  </div>
+);
+
+/**
+ * SSW intro: the backdrop with a tag and title, the AI badge, the name lower third, then a lower third naming
+ * the project (such as SSW Rules) from the given line. The speaker shows in the camera box from frame 0.
+ */
+export const IntroCard: React.FC<{cue: number[]; name: string; title: string; project: string; today: string; todayAt?: number; headline: {tag: string; title: string}}> = ({
+  cue, name, title, project, today, todayAt = 1, headline,
 }) => (
   <AbsoluteFill>
-    <Photo frames={frames} />
+    <Backdrop />
+    <Headline tag={headline.tag} title={headline.title} />
     <AiBadge at={6} />
     <Between from={0} to={at(cue, todayAt)}>
       <LowerThird at={at(cue, 0) - 4} name={name} title={title} style={{bottom: 150}} />
     </Between>
     <Between from={at(cue, todayAt)}>
-      <LowerThird at={at(cue, todayAt)} name="Today" title={today} style={{bottom: 150}} />
+      <LowerThird at={at(cue, todayAt)} name={project} title={today} style={{bottom: 150}} />
     </Between>
   </AbsoluteFill>
 );
 
-/** SSW outro: dimmed portrait, recap list, and the sign-off lower third on the last line. */
-export const OutroCard: React.FC<{cue: number[]; frames: number; name: string; recap: string[]; signOff?: string}> = ({
-  cue, frames, name, recap, signOff = 'signing off',
+/** SSW outro: the backdrop, summary list, and the sign-off lower third on the last line. */
+export const OutroCard: React.FC<{cue: number[]; name: string; recap: string[]; signOff?: string; heading?: string}> = ({
+  cue, name, recap, signOff = 'signing off', heading = 'Summary',
 }) => (
   <AbsoluteFill>
-    <Photo frames={frames} dim={0.85} />
+    <Backdrop />
     <AiBadge at={0} />
     <div style={{position: 'absolute', left: 96, top: 170}}>
       <Appear at={at(cue, 0)}>
-        <div style={{fontFamily: sans, fontSize: 30, fontWeight: 800, color: c.red, letterSpacing: 3, marginBottom: 22}}>QUICK RECAP</div>
+        <div style={{fontFamily: sans, fontSize: 30, fontWeight: 800, color: c.red, letterSpacing: 3, marginBottom: 22, textTransform: 'uppercase'}}>{heading}</div>
       </Appear>
       {recap.map((r, i) => (
         <Appear key={r} at={at(cue, 0) + 30 + i * 40} x={-30} y={0}>

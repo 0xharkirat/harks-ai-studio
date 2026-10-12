@@ -9,7 +9,7 @@ node_modules/
 assets/voice/**/*.mp3
 assets/voice/.download/
 
-# Personal: the portrait, and everything a video produces
+# Personal: brand assets, and everything a video produces
 assets/brand/
 videos/
 voice-tests/
@@ -20,7 +20,7 @@ assets/music/*.wav
 # Template build output
 template/src/config.json
 
-# Personal config: your voice id, portrait, accent and clip list live in ~/.config/done-video/
+# Personal config: your voice id, puppet, accent and clip list live in ~/.config/done-video/
 config.json
 voice.json
 assets/voice/sources.json

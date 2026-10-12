@@ -51,7 +51,7 @@
     "id": "outro",
     "lines": [
       {
-        "say": "Quick recap. TODO: one line on what changed."
+        "say": "Summary. TODO: one line on what changed."
       },
       {
         "say": "This was {{ai_name}}, signing off.",

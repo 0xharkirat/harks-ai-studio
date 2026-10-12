@@ -15,6 +15,7 @@ The write-up with copy-paste prompts: [harksingh.com/posts/harks-ai-voice-clone]
 - [Voice recipe](#voice-recipe)
 - [Local voice](#local-voice)
 - [Subtitles](#subtitles)
+- [Puppet](#puppet)
 - [Components](#components)
 - [Assets](#assets)
 - [Pronunciation](#pronunciation)
@@ -33,6 +34,7 @@ The narrator always introduces itself as your AI, so nobody mistakes the clone f
 - macOS or Linux with [Claude Code](https://claude.com/claude-code)
 - An [ElevenLabs](https://elevenlabs.io) plan with Instant Voice Cloning (Starter or above)
 - Node 22, Dart 3, ffmpeg, Python 3.11 via `uv`, Whisper, and `yt-dlp`
+- For the talking camera box on Apple Silicon: Rosetta 2, which runs Rhubarb Lip Sync
 - A few minutes of public video of you talking alone, with no music
 
 ## Install
@@ -69,7 +71,7 @@ The only required change is `voice_id`: copy it from your clone in the ElevenLab
 The rest is optional, and every field is explained in `_notes` inside the file:
 
 - `speaker.ai_name`, `person`, `title`: what the narrator calls itself, and an optional name bar.
-- `speaker.portrait`: a photo for the intro and a camera box; leave it `null` for a clean title card.
+- `speaker.puppet`: a cartoon of you as a Character Animator style PSD, which talks in the camera box (see [Puppet](#puppet)); leave it `null` for no camera box.
 - `prefix`: an accent tag such as `[Indian English accent] `, if your clone drifts toward another accent.
 - `gate`: per-scene checks for accent drift and likeness, off by default.
 
@@ -90,6 +92,9 @@ Every step lists its commands, so it also works by hand.
 Once the PBI is tested, say `test pass`.
 [`UPLOAD.md`](UPLOAD.md) writes `youtube.txt` next to the video: title, description, chapters timed from the scenes, version line, and upload settings.
 You upload it yourself, send back the link, and the skill posts the Done on the issue.
+
+For a short done video (30-60 s, 4 scenes), start the project with `scripts/new-video.sh --short NN-name`.
+Its camera box is the puppet in a red border with a faint voice glow, and it plays a whoosh on each cut.
 
 `examples/01-done-video/script.json` is a real done-video script.
 `examples/02-voice-clone-tutorial/` shows every component in use.
@@ -191,18 +196,47 @@ Another local model, such as Kokoro, is one more case in `localVoice` in `script
 
 Add multi-word product names to `TERMS` in `captions.ts` so they stay on one line.
 
+## Puppet
+
+`speaker.puppet` points at a cartoon of you as a Photoshop file, laid out the way Adobe Character Animator expects.
+The camera box shows it for the whole video, intro and outro included, and its mouth moves with the narration.
+
+- A `Head` group holds the head art and a `Mouth` group with 1 layer per mouth shape.
+  Use the Character Animator names; the builder needs `Neutral`, `M`, `S`, `D`, `Ah`, `Oh`, `W-Oo`, `F`, and `L`.
+- A `Body` group is optional; the box shows the top of it.
+- The eyes stay in the head art: `scripts/puppet.py` finds the eye whites and draws 3 lid stages for the blinks.
+
+`new-video.sh` runs `scripts/puppet.py` to cut the layers into `public/puppet/`.
+`layout.dart` runs [Rhubarb Lip Sync](https://github.com/DanielSWolf/rhubarb-lip-sync) on each scene's narration, with the scene's script as the dialog, and writes `src/mouth.json`.
+The first run downloads Rhubarb 1.14.0 into `.cache/` and checks it against the release checksum.
+The macOS build is Intel only, so Apple Silicon runs it through Rosetta 2 (`softwareupdate --install-rosetta --agree-to-license`).
+Scenes run in parallel, about 15 s for a 45 s video, and `check/mouth/` caches each one, so a re-layout costs nothing.
+
+The mouth follows the narration track alone, and only inside the narration lines.
+A clip of someone else talking, the music, and the sound effects never move it.
+The puppet blinks every 2.3-6 s from a fixed seed, and its head sways and lifts a little while the narrator talks.
+2 renders give the same frames.
+
+Tried and dropped:
+
+| Idea | Result |
+|---|---|
+| Neural talking heads (LivePortrait, MuseTalk, LatentSync, Wan S2V) | CUDA only or very slow on a Mac, untested on a bearded cartoon, and several licences bar commercial use |
+| Mouth timing from the final mix | The mouth moved on 412 of 614 frames where someone else talked in a clip |
+| Cutting the brows out of flat head art | Left smudges; brows that move need their own layers in the PSD |
+
 ## Components
 
 All in `template/src/ui.tsx`:
 
 | Component | Use |
 |---|---|
-| `IntroCard`, `OutroCard` | Portrait, AI disclosure badge, name lower third, recap |
+| `IntroCard`, `OutroCard` | Title card, AI disclosure badge, name lower third, recap |
 | `LowerThird`, `SswTag` | SSW TV name bar; "✅ Good example", "❌ Bad example" and "LEARN MORE" bars |
 | `BrowserShot` | Real screenshot with a gliding cursor, click sound, red highlight, zoom, and blur boxes |
 | `Terminal` | Commands and prompts type out with the typewriter sound |
 | `PermissionPicker` | Endpoint list where the cursor clicks each access level |
-| `PiP` | Bottom-right camera box with the "AI VOICE" label and a voice meter |
+| `PiP` | Bottom-right camera box: the talking puppet (`puppet.tsx`), the "AI VOICE" label, and a voice meter |
 | `Captions` | Burned-in subtitles |
 | `Header`, `Chip`, `Appear`, `Between`, `Backdrop` | Titles, chips, and timed reveals |
 
@@ -222,7 +256,7 @@ Explainer pieces, with no SSW branding, are in `template/src/explain.tsx`:
 |---|---|
 | `assets/voice/sources.json` | Which public videos and seconds your voice clips come from; `fetch-voice.sh` rebuilds them |
 | `assets/voice/*.mp3`, `assets/voice/reference/*.mp3` | Your training and held-out clips; never committed |
-| `speaker.portrait` in your config | Optional photo for intros, outros, and the camera box; never committed |
+| `speaker.puppet` in your config | Optional Character Animator style PSD of you for the camera box; never committed |
 | `assets/sfx/` | Typewriter loop and mouse click from ElevenLabs sound effects; good-example ding and bad-example buzzer from free YouTube uploads. `sources.json` lists where each came from |
 | `assets/music/minimal_lofi_bed_4min.mp3` | A 4 minute quiet bed from ElevenLabs music |
 

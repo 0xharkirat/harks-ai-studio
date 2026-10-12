@@ -7,7 +7,7 @@ description: Make a narrated SSW done video, or a short tutorial, in the user's 
 
 The studio is this skill's base directory, which Claude Code shows when the skill loads; from a shell, `STUDIO=$(cd -P ~/.claude/skills/done-video && pwd)`.
 The recipe and the speaker's identity come from one config file (`scripts/config-path.sh` prints which); never pass voice settings any other way.
-The portrait, accent tag, voice profile, and accent and likeness gates are all optional in that config.
+The puppet, accent tag, voice profile, and accent and likeness gates are all optional in that config.
 `README.md` there is the reference: Voice, Subtitles, Components, Assets, and the "Tried and dropped" table.
 On "test pass" for a PBI whose video is already rendered, follow [`UPLOAD.md`](UPLOAD.md) in place of the steps below.
 
@@ -17,8 +17,9 @@ On "test pass" for a PBI whose video is already rendered, follow [`UPLOAD.md`](U
 - `voice_id` in the config is a real clone, not the placeholder; if not, see README "Make it yours".
 - If the config sets `gate`, `$STUDIO/.venv/bin/python -c "import speechbrain, librosa"` works; if not, run the venv line from README Install.
 - `whisper --help` works.
+- If the config sets `speaker.puppet` on Apple Silicon, `arch -x86_64 /usr/bin/true` works (Rosetta 2, for Rhubarb Lip Sync); if not, `softwareupdate --install-rosetta --agree-to-license`.
 
-Done when all three pass.
+Done when every check passes.
 
 ## 1. Gather the PBI
 
@@ -32,7 +33,7 @@ Done when you can state, one sentence each: the pain before, the change, and the
 ## 2. Create the project
 
 From `$STUDIO`: `scripts/new-video.sh NN-short-name`, where NN is the next number in `videos/`.
-It copies the template, snapshots the config into `src/config.json` (the voice tools then use that, so a later recipe change never alters this video), and fills the speaker's name into `script.json`.
+It copies the template, snapshots the config into `src/config.json` (the voice tools then use that, so a later recipe change never alters this video), builds the camera-box puppet from `speaker.puppet`, and fills the speaker's name into `script.json`.
 It ends by printing `Ready:`; without that line it failed, and it removes the half-built folder itself.
 Run every later command from `videos/NN-short-name/project`.
 
@@ -75,15 +76,18 @@ dart ../../../scripts/tts.dart reroll   # only chunks holding a failed scene, ne
 Repeat check and reroll until `check/bad.txt` is empty.
 A ⚠ name flag ("Clod Code") is fine: subtitles show the script text, so never re-roll for it.
 Then `dart ../../../scripts/pad.dart 0.6` and `dart ../../../scripts/layout.dart`.
+With a puppet, `layout.dart` also times its mouth from the narration alone (README Puppet), so a clip of someone else talking never moves it.
 
 Done when `check/bad.txt` is empty and `src/layout.json` exists.
 
 ## 6. Build the scenes
 
 In `src/scenes.tsx`, export one component per scene id with a capital first letter (`demo` -> `Demo`).
-Use `IntroCard` and `OutroCard` as they are; build demo scenes from `BrowserShot`, `Terminal`, `PermissionPicker`, `SswTag`, and `Chip` in `src/ui.tsx`.
+Use `IntroCard` (its `headline` is the tag and title on the opening card) and `OutroCard` as they are; build demo scenes from `BrowserShot`, `Terminal`, `PermissionPicker`, `SswTag`, and `Chip` in `src/ui.tsx`.
+`IntroCard`'s `project` names the product the video is about (such as SSW Rules); its lower third shows it above the promise.
 `cue[i]` is the frame line `i` starts and `ends[i]` the frame it stops; use `at(cue, i)`.
 A recorded clip goes in `BrowserShot`'s `clip`, starting on the click frame; give that scene `"hold": <seconds>` in `script.json` and rerun `layout.dart`, so it plays with the narration silent.
+Open the bad example and the fix each with a black title card: `"black": 1.2, "card": "Before"` on the pain scene and `"black": 1.2, "card": "After", "reveal": "reveal"` on the fix scene in `script.json`; the fix lands with a positive sound.
 Mark good and bad examples with the one `SswTag` lower third: `✅ Good example` or `❌ Bad example` in `lead`, and `sound="good"` or `sound="bad"`.
 For a sound effect `assets/sfx/` lacks, find a free one on YouTube first (`yt-dlp --flat-playlist "ytsearch10:<effect> sound effect no copyright"`), pick one whose title or description allows free use, download the audio only (`yt-dlp -f bestaudio -x --audio-format wav <url>`), trim it to the hit at -20 LUFS, and add its URL and licence line to `assets/sfx/sources.json`; ElevenLabs sound effects are the fallback when nothing fits.
 `examples/02-voice-clone-tutorial/scenes.tsx` shows every component in use.

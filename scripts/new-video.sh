@@ -1,34 +1,41 @@
 #!/bin/zsh
 # Start a new narrated video from the template.
-# Usage: scripts/new-video.sh [--explainer] 03-short-name   (run from anywhere)
-#   --explainer  start from the explainer-video scenes, voiced locally with macOS say, with no portrait
+# Usage: scripts/new-video.sh [--explainer | --short] 03-short-name   (run from anywhere)
+#   --explainer  start from the explainer-video scenes, voiced locally with macOS say, with no camera box
+#   --short      start from the short done-video scenes (30-60 s): glow camera box, a whoosh on each cut
 set -e
 studio=${0:A:h:h}
 explainer=0
+short=0
 [[ $1 == --explainer ]] && { explainer=1; shift; }
+[[ $1 == --short ]] && { short=1; shift; }
 name=$1
 # The name becomes a folder under videos/, so only allow NN-kebab-case: no "..", no slashes.
-[[ $name =~ '^[0-9]{2}-[a-z0-9]+(-[a-z0-9]+)*$' ]] || { echo "usage: $0 [--explainer] NN-short-name (like 03-login-fix)"; exit 1; }
+[[ $name =~ '^[0-9]{2}-[a-z0-9]+(-[a-z0-9]+)*$' ]] || { echo "usage: $0 [--explainer | --short] NN-short-name (like 03-login-fix)"; exit 1; }
 dir=$studio/videos/$name/project
 [[ ! -e $dir ]] || { echo "$dir already exists"; exit 1; }
 config=$(zsh $studio/scripts/config-path.sh)
-portrait=''
-(( explainer )) || portrait=$(python3 -c "import json,os;p=json.load(open('$config'))['speaker'].get('portrait');print(os.path.expanduser(p) if p else '')")
-[[ -z $portrait || -f $portrait ]] || { echo "speaker.portrait in $config points at a missing file: $portrait"; exit 1; }
+puppet=''
+(( explainer )) || puppet=$(python3 -c "import json,os;p=json.load(open('$config'))['speaker'].get('puppet');print(os.path.expanduser(p) if p else '')")
+[[ -z $puppet || -f $puppet ]] || { echo "speaker.puppet in $config points at a missing file: $puppet"; exit 1; }
+python3 -c "import json,sys;sys.exit(0 if json.load(open('$config'))['speaker'].get('portrait') else 1)" &&
+  echo "note: speaker.portrait is no longer used; the camera box shows the speaker.puppet cartoon"
 trap 'rm -rf $studio/videos/$name; echo "new-video failed; removed the half-built $name"' ERR
 mkdir -p $dir/public/audio $dir/public/shots
 cp -R $studio/template/. $dir/
 (( explainer )) && cp -R $studio/explainer-video/template/. $dir/
+(( short )) && cp -R $studio/short-video/template/. $dir/
 cp -R $studio/assets/sfx $studio/assets/music $dir/public/
-[[ -n $portrait ]] && cp $portrait $dir/public/portrait.jpg
+# The talking cartoon in the camera box: layers cut from the Character Animator PSD (see README Puppet).
+[[ -n $puppet ]] && uv run --quiet $studio/scripts/puppet.py $puppet $dir/public/puppet $dir/src/puppet.json
 cp $config $dir/src/config.json   # the recipe this video was made with; the voice tools read it
-# An explainer is not narrated as the speaker: a local voice reads it, and no portrait or camera box shows.
+# An explainer is not narrated as the speaker: a local voice reads it, and no camera box shows.
 (( explainer )) && python3 - $dir/src/config.json <<'EOF'
 import json, sys
 path = sys.argv[1]
 config = json.load(open(path))
 config.setdefault('tts', {})['provider'] = 'say'
-config['speaker']['portrait'] = None
+config['speaker']['puppet'] = None
 json.dump(config, open(path, 'w'), indent=2)
 EOF
 cd $dir

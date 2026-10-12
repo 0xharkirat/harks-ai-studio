@@ -1,0 +1,48 @@
+[
+  {
+    "id": "intro",
+    "lines": [
+      {
+        "say": "Yo, what's up guys? I'm {{ai_name}}.",
+        "tts": "Yo, what's up guys? I'm {{ai_name_tts}}."
+      },
+      {
+        "say": "TODO: {{person_first}} just shipped <the change> on <the product>."
+      }
+    ]
+  },
+  {
+    "id": "pain",
+    "lines": [
+      {
+        "say": "TODO: what the user saw before."
+      },
+      {
+        "say": "TODO: the moment it hurt."
+      }
+    ]
+  },
+  {
+    "id": "fix",
+    "lines": [
+      {
+        "say": "TODO: what changed."
+      },
+      {
+        "say": "TODO: what the user sees now."
+      }
+    ]
+  },
+  {
+    "id": "outro",
+    "lines": [
+      {
+        "say": "Summary, TODO: the one-line payoff."
+      },
+      {
+        "say": "This was {{ai_name}}, signing off.",
+        "tts": "This was {{ai_name_tts}}, signing off."
+      }
+    ]
+  }
+]

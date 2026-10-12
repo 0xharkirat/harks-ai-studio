@@ -44,7 +44,14 @@ int distance(List<String> a, List<String> b) {
 void main(List<String> args) {
   final ids = args.isNotEmpty ? args[0].split(',') : null;
   final scenes = (jsonDecode(File('script.json').readAsStringSync()) as List).where((s) => ids == null || ids.contains(s['id'])).toList();
-  final files = [for (final s in scenes) 'public/audio/${s['id']}.mp3'];
+  // Check what the video will play: retake.dart and pad.dart rebuild <id>.wav, so a .wav newer than the .mp3 wins.
+  String audioOf(String id) {
+    final mp3 = File('public/audio/$id.mp3'), wav = File('public/audio/$id.wav');
+    if (!wav.existsSync()) return mp3.path;
+    if (!mp3.existsSync()) return wav.path;
+    return wav.lastModifiedSync().isAfter(mp3.lastModifiedSync()) ? wav.path : mp3.path;
+  }
+  final files = [for (final s in scenes) audioOf(s['id'] as String)];
   Directory('check').createSync(recursive: true);
 
   final w = Process.runSync('whisper', [...files, '--model', 'medium.en', '--language', 'en', '--output_format', 'txt', '--output_dir', 'check', '--fp16', 'False']);
@@ -55,7 +62,7 @@ void main(List<String> args) {
   final voice = <String, List<double>>{}; // file name -> [match, indian, us]
   for (final line in ((v?.stdout ?? '') as String).split('\n')) {
     final parts = line.trim().split(RegExp(r'\s+'));
-    if (parts.length >= 7 && parts[0].endsWith('.mp3')) {
+    if (parts.length >= 7 && (parts[0].endsWith('.mp3') || parts[0].endsWith('.wav'))) {
       voice[parts[0]] = [double.parse(parts[1]), double.parse(parts[2]), double.parse(parts[3])];
     }
   }
@@ -70,7 +77,7 @@ void main(List<String> args) {
     // A misheard name is only flagged, so score words as if it were heard right.
     final got = heard.replaceAllMapped(names, (m) => m[0]!.startsWith('ha') ? 'hark' : 'claude').split(' ');
     final wer = distance(want, got) / want.length;
-    final [match, indian, us] = voice['$id.mp3'] ?? [double.nan, double.nan, double.nan];
+    final [match, indian, us] = voice[audioOf(id).split('/').last] ?? [double.nan, double.nan, double.nan];
     final notes = [if (misheard) '⚠ name said differently (captions are still right)'];
     final problems = [
       if (wer >= 0.2) 'words off (${(wer * 100).round()}%)',

@@ -14,12 +14,13 @@ export type SceneProps = {cue: number[]; ends: number[]; frames: number};
 
 const PBI = {
   title: 'TODO: PBI title',
+  project: 'TODO: the product, such as SSW Rules',
   today: 'TODO: short promise of the video',
   recap: ['TODO: what changed', 'TODO: how to use it'],
 };
 
-export const Intro: React.FC<SceneProps> = ({cue, frames}) => (
-  <IntroCard cue={cue} frames={frames} name={who.ai_name} title={nameBar} today={PBI.today} />
+export const Intro: React.FC<SceneProps> = ({cue}) => (
+  <IntroCard cue={cue} name={who.ai_name} title={nameBar} project={PBI.project} today={PBI.today} headline={{tag: PBI.project, title: PBI.title}} />
 );
 
 export const Overview: React.FC<SceneProps> = ({cue}) => (
@@ -55,4 +56,4 @@ export const Demo: React.FC<SceneProps> = ({cue}) => (
   </AbsoluteFill>
 );
 
-export const Outro: React.FC<SceneProps> = ({cue, frames}) => <OutroCard cue={cue} frames={frames} name={who.ai_name} recap={PBI.recap} />;
+export const Outro: React.FC<SceneProps> = ({cue}) => <OutroCard cue={cue} name={who.ai_name} recap={PBI.recap} />;

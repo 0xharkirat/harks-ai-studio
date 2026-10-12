@@ -21,7 +21,7 @@ Done when you can state, 1 sentence each: the question, the answer, and the pict
 ## 2. Create the project
 
 From `$STUDIO`: `scripts/new-video.sh --explainer NN-short-name`, where NN is the next number in `videos/`.
-It starts from the explainer scenes, sets `tts.provider` to `say`, and removes the portrait in the project's config.
+It starts from the explainer scenes, sets `tts.provider` to `say`, and removes the puppet in the project's config, so no camera box shows.
 Run every later command from `videos/NN-short-name/project`.
 
 Done when it prints `Ready:`.

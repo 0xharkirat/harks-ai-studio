@@ -20,5 +20,21 @@
     "use": "BrowserShot clicks, Terminal typing",
     "source": "ElevenLabs sound effects",
     "licence": "Generated with the account's ElevenLabs plan"
+  },
+  {
+    "file": "whoosh.wav",
+    "use": "Screen changes in talking-head edits",
+    "source": "https://www.youtube.com/watch?v=pqEn9icjK0I",
+    "title": "Whoosh Sounds effects No copyright, YouTube Sound Effects",
+    "licence": "Description: \"Feel free to download or use this audio in any way\"",
+    "cut": "4.12 s for 0.7 s, 0.2 s fade out, -20 LUFS"
+  },
+  {
+    "file": "reveal.wav",
+    "use": "Positive sound as a scene appears after a black pause (script.json \"reveal\")",
+    "source": "https://www.youtube.com/watch?v=bh0l3gX9aGg",
+    "title": "Success Notification Sound Effect, RoyaltyFreeUseSoundEffects",
+    "licence": "Description: \"made to be used in both commercial and non-commercial works\", no credit asked",
+    "cut": "0 s for 0.8 s, 0.2 s fade out, -20 LUFS"
   }
 ]
