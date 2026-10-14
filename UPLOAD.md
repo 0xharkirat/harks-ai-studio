@@ -8,7 +8,7 @@ The formats come from SSW rules: `where-to-upload-work-related-videos`, `optimiz
 ## 1. Find the video and its links
 
 Pick the `videos/NN-*` folder for this PBI; when two could match, ask which.
-Read its `script.json`, the newest `<title> vN.mp4` (the one without a `zz ` prefix), and `youtube.txt` if one exists.
+Read its `script.json`, the newest final `<title> vN.mp4` (no `zz ` prefix, and not a `<title> draft vN.mp4`: only a final render is uploaded), and `youtube.txt` if one exists.
 Collect the issue, PR, and live page URLs with `gh issue view` and `gh pr view`.
 The version is that file's `vN`, so the YouTube video and the file share a number.
 When `youtube.txt` already records a `URL:` for an older version, this upload is a new version of a published video.

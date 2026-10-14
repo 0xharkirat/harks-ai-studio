@@ -1,6 +1,6 @@
 # harks-ai-studio
 
-A Claude Code skill that makes SSW-style done videos, narrated in your own ElevenLabs voice clone and rendered with Remotion.
+A Claude Code skill that makes SSW-style done videos, narrated in your own voice clone (a free local draft, then ElevenLabs for the final) and rendered with Remotion.
 
 Watch one: [Done Videos with ElevenLabs & Claude Code](https://youtu.be/H5bpsZGg4Co) (3:24), made entirely by this skill.
 The write-up with copy-paste prompts: [harksingh.com/posts/harks-ai-voice-clone](https://harksingh.com/posts/harks-ai-voice-clone).
@@ -13,6 +13,7 @@ The write-up with copy-paste prompts: [harksingh.com/posts/harks-ai-voice-clone]
 - [Edit a finished video](#edit-a-finished-video)
 - [API key permissions](#api-key-permissions)
 - [Voice recipe](#voice-recipe)
+- [Draft and final](#draft-and-final)
 - [Local voice](#local-voice)
 - [Subtitles](#subtitles)
 - [Puppet](#puppet)
@@ -25,14 +26,15 @@ The write-up with copy-paste prompts: [harksingh.com/posts/harks-ai-voice-clone]
 ## What it does
 
 You say "make a done video for <PBI link>".
-The skill reads the PR, issue, and commits, writes a script in the [SSW done video](https://www.ssw.com.au/rules/done-video) order (intro, overview, pain, demo, outro), and voices it with your clone.
+The skill reads the PR, issue, and commits, writes a script in the [SSW done video](https://www.ssw.com.au/rules/done-video) order (intro, overview, pain, demo, outro), and voices it with your clone: first a free local draft for the rough edits, then the ElevenLabs clone once the draft is right.
 It checks every scene for accent drift and likeness, then renders a 1080p video with real screenshots, cursor clicks, SSW TV lower thirds, rule-based subtitles, typing and click sounds, and a quiet music bed.
 The narrator always introduces itself as your AI, so nobody mistakes the clone for you.
 
 ## Requirements
 
 - macOS or Linux with [Claude Code](https://claude.com/claude-code)
-- An [ElevenLabs](https://elevenlabs.io) plan with Instant Voice Cloning (Starter or above)
+- An [ElevenLabs](https://elevenlabs.io) plan with Instant Voice Cloning (Starter or above), needed only for the final voice
+- For the free local draft voice: an Apple Silicon Mac with about 6 GB of disk
 - Node 22, Dart 3, ffmpeg, Python 3.11 via `uv`, Whisper, and `yt-dlp`
 - For the talking camera box on Apple Silicon: Rosetta 2, which runs Rhubarb Lip Sync
 - A few minutes of public video of you talking alone, with no music
@@ -58,6 +60,12 @@ echo '[ -f ~/.zshrc.local ] && source ~/.zshrc.local' >> ~/.zshrc
 ```
 
 The voice-check models (SpeechBrain, about 100 MB) and Whisper download on first use.
+
+Set up the local draft voice once (about 4.5 GB model, reused from the Mac when it is already there):
+
+```sh
+scripts/setup-local-voice.sh     # ends with "Ready:"
+```
 
 ## Make it yours
 
@@ -93,6 +101,8 @@ Once the PBI is tested, say `test pass`.
 [`UPLOAD.md`](UPLOAD.md) writes `youtube.txt` next to the video: title, description, chapters timed from the scenes, version line, and upload settings.
 You upload it yourself, send back the link, and the skill posts the Done on the issue.
 
+The skill voices the video as a free DRAFT first and switches to the ElevenLabs clone only after you say the draft is good (see [Draft and final](#draft-and-final)).
+
 For a short done video (30-60 s, 4 scenes), start the project with `scripts/new-video.sh --short NN-name`.
 Its camera box is the puppet in a red border with a faint voice glow, and it plays a whoosh on each cut.
 
@@ -120,6 +130,8 @@ It adds [`explainer-video/CHANGE.md`](explainer-video/CHANGE.md): a before/after
 ## Edit a finished video
 
 Change only the lines that need it, without re-voicing the rest.
+In DRAFT mode, edit `script.json` and run `tts.dart` again: it re-voices only the lines that changed.
+The commands below are for a FINAL video voiced by ElevenLabs (`retake.dart` refuses a local voice).
 Run these from the video's `project` folder:
 
 ```sh
@@ -170,19 +182,53 @@ Tried on the author's clone and dropped:
 | Clones from 2 minutes of one video | Less like the speaker than a 4 minute clone from 2 videos |
 | Pitch post-processing (Praat, Rubber Band) | Matched the numbers but sounded rough and noisy |
 | Chatterbox (local) | Higher pitch, weaker accent, less like the speaker |
+| macOS `say` (Aman) for drafts | A stock voice, not a clone: the accent and likeness gates cannot run, and the pace and tone differ from the final. Qwen3-TTS replaced it for drafts. `say` stays as the fallback when the local voice is not set up |
+
+## Draft and final
+
+A video is in one of two voice modes. The mode is `tts.provider` in the video's own `src/config.json`.
+
+| | DRAFT | FINAL |
+|---|---|---|
+| Voice | Local Qwen3-TTS clone (`qwen`) | Your ElevenLabs clone |
+| Cost | No credits | About 1 credit per character |
+| Use | Every rough edit: script, visuals, timing | One pass, after you say the draft is good |
+| Render name | `<title> draft vN.mp4`, never uploaded | `<title> vN.mp4` |
+
+A new video starts in DRAFT. If the local voice is not set up, `new-video.sh` says so in one line and uses `say`, never ElevenLabs.
+Run these from the video's `project` folder:
+
+```sh
+zsh ../../../scripts/voice-mode.sh status   # DRAFT (qwen, attempts 2) or FINAL (elevenlabs)
+zsh ../../../scripts/voice-mode.sh final    # prints the credit estimate; calls nothing
+dart ../../../scripts/tts.dart --dry-run    # lists each ElevenLabs request it would send; calls nothing
+dart ../../../scripts/tts.dart              # now ElevenLabs is billed
+zsh ../../../scripts/voice-mode.sh draft    # back to the free voice
+```
+
+`voice-mode.sh` only edits `src/config.json`. It never calls ElevenLabs: the next `tts.dart` run does, in FINAL mode.
+It does not touch the recipe (`voice_id`, `model_id`, `prefix`, `seed`), so FINAL uses what `new-video.sh` stored.
+A video whose config has no `tts` block is FINAL, which keeps the older videos working.
+After the switch, run `tts.dart`, `check.dart`, `pad.dart`, `layout.dart`, and render once.
 
 ## Local voice
 
-Set `tts.provider` to `say` in the config to narrate with macOS `say` in place of ElevenLabs.
-It is free, works offline, and needs no API key.
-`tts.say.voice` names a voice from `say -v '?'`, and `tts.say.rate` sets words a minute.
-The default is `Aman`, a neural Indian English voice; System Settings > Accessibility > Spoken Content adds more.
+`tts.provider` picks the narrator. Set it per video with `voice-mode.sh`, or in the config for new videos.
 
-`tts.dart` voices each line on its own, so line times are exact.
+| Provider | What | Gates in `check.dart` |
+|---|---|---|
+| `qwen` | Qwen3-TTS clone of your voice, on the Mac (MLX). The draft voice. See [`local-voice/README.md`](local-voice/README.md) | Words, accent, and likeness all run |
+| `say` | macOS `say`: free, offline, a stock voice. The fallback when `qwen` is not set up, and the voice of `--explainer` videos | Words only: a stock voice is not a clone |
+| `elevenlabs` | Your ElevenLabs clone. The final voice | Words, accent, and likeness |
+
+`tts.dart` voices each line on its own, so line times are exact, and keeps each voiced line in `.voice-cache/`, so a script edit re-voices only the lines that changed.
 It writes the same files as the ElevenLabs path, so `pad.dart` and `layout.dart` run unchanged.
-`check.dart` skips the accent and likeness gates for a local voice.
-`retake.dart` refuses a local voice, because a full re-voice is free.
+`tts.qwen.python`, `server`, and `config` are paths relative to the studio and default to `local-voice/`; `tts.qwen.attempts` is takes per sentence (2 is the draft default, 4 is full quality).
+`tts.say.voice` names a voice from `say -v '?'`, and `tts.say.rate` sets words a minute.
+`retake.dart` refuses a local voice, because `tts.dart` already re-voices only changed lines.
 Another local model, such as Kokoro, is one more case in `localVoice` in `scripts/tts.dart`.
+
+The local voice is not as lively as ElevenLabs yet. `local-voice/README.md` holds the energy numbers and the round log.
 
 ## Subtitles
 

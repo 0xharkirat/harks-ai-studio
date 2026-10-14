@@ -1,6 +1,6 @@
 ---
 name: done-video
-description: Make a narrated SSW done video, or a short tutorial, in the user's own ElevenLabs voice clone, rendered with Remotion. Covers PBI to script, cloned narration gated for accent and likeness, real screenshots with cursor clicks, subtitles, and render. Use for "make a done video", "done video for this PBI", "narrate this in my voice", "a video in my AI voice", fixing an existing done video, or "test pass" on a PBI that has one (YouTube upload pack). An explainer on a general topic, with no PBI and no cloned voice, belongs to explainer-video.
+description: Make a narrated SSW done video, or a short tutorial, in the user's own voice clone (a free local draft, then ElevenLabs for the final), rendered with Remotion. Covers PBI to script, cloned narration gated for accent and likeness, real screenshots with cursor clicks, subtitles, and render. Use for "make a done video", "done video for this PBI", "narrate this in my voice", "a video in my AI voice", fixing an existing done video, or "test pass" on a PBI that has one (YouTube upload pack). An explainer on a general topic, with no PBI and no cloned voice, belongs to explainer-video.
 ---
 
 # Done video
@@ -8,13 +8,18 @@ description: Make a narrated SSW done video, or a short tutorial, in the user's 
 The studio is this skill's base directory, which Claude Code shows when the skill loads; from a shell, `STUDIO=$(cd -P ~/.claude/skills/done-video && pwd)`.
 The recipe and the speaker's identity come from one config file (`scripts/config-path.sh` prints which); never pass voice settings any other way.
 The puppet, accent tag, voice profile, and accent and likeness gates are all optional in that config.
-`README.md` there is the reference: Voice, Subtitles, Components, Assets, and the "Tried and dropped" table.
+`README.md` there is the reference: Voice, Draft and final, Subtitles, Components, Assets, and the "Tried and dropped" table.
+A video has two voice modes.
+DRAFT is the local Qwen3-TTS clone of the speaker: free, and the voice for every rough edit.
+FINAL is the ElevenLabs clone: billed, and used once, after the user says the draft is good.
 On "test pass" for a PBI whose video is already rendered, follow [`UPLOAD.md`](UPLOAD.md) in place of the steps below.
 
 ## 0. Preflight
 
-- `echo ${ELEVENLABS_API_KEY:+set}` prints `set`; if not, the key belongs in `~/.zshrc.local`, never in chat.
-- `voice_id` in the config is a real clone, not the placeholder; if not, see README "Make it yours".
+- `scripts/setup-local-voice.sh --check` prints nothing; if not, run `scripts/setup-local-voice.sh` once (it ends with `Ready:`).
+  Without the local voice, a draft falls back to `say`, never to ElevenLabs.
+- For the final only: `echo ${ELEVENLABS_API_KEY:+set}` prints `set`; if not, the key belongs in `~/.zshrc.local`, never in chat.
+- For the final only: `voice_id` in the config is a real clone, not the placeholder; if not, see README "Make it yours".
 - If the config sets `gate`, `$STUDIO/.venv/bin/python -c "import speechbrain, librosa"` works; if not, run the venv line from README Install.
 - `whisper --help` works.
 - If the config sets `speaker.puppet` on Apple Silicon, `arch -x86_64 /usr/bin/true` works (Rosetta 2, for Rhubarb Lip Sync); if not, `softwareupdate --install-rosetta --agree-to-license`.
@@ -34,8 +39,12 @@ Done when you can state, one sentence each: the pain before, the change, and the
 
 From `$STUDIO`: `scripts/new-video.sh NN-short-name`, where NN is the next number in `videos/`.
 It copies the template, snapshots the config into `src/config.json` (the voice tools then use that, so a later recipe change never alters this video), builds the camera-box puppet from `speaker.puppet`, and fills the speaker's name into `script.json`.
+The video starts in DRAFT: `tts.provider` is `qwen`.
+If the local voice is not set up, it says so in one line and uses `say`.
 It ends by printing `Ready:`; without that line it failed, and it removes the half-built folder itself.
 Run every later command from `videos/NN-short-name/project`.
+
+Done when `Ready:` prints and `zsh ../../../scripts/voice-mode.sh status` says `DRAFT`.
 
 ## 3. Write the script
 
@@ -46,6 +55,7 @@ Replace every `TODO` in `script.json`; the voice tools refuse to spend credits w
   The `examples/` scripts show structure only; where they differ from the voice profile, the profile wins.
   The AI narrates about the person in third person ("<name> gave Claude Code one prompt") and talks to the viewer as "you".
 - Keep the intro line "I'm <ai_name>" and the sign-off "This was <ai_name>, signing off".
+  The draft voice is a clone of the speaker too, so the draft says them as well.
 - `say` is the subtitle text; put spoken spellings in `tts`: acronyms ("S S W", "P B I", "Y T D L P"), money, percentages, times and years in words, and command names as they are said ("claude budget").
 - One line per sentence or two; each scene starts a new visual.
 - Scene ids are one lowercase word, because each becomes a component name (`demo` -> `Demo`).
@@ -67,18 +77,40 @@ Done when every demo scene has the shots it needs and each quoted value matches 
 
 ## 5. Voice the narration
 
+Voice in DRAFT first, from the project folder.
+The draft costs no ElevenLabs credits, so iterate the script, the visuals, and the timing as often as you like.
+
 ```sh
-dart ../../../scripts/tts.dart          # stitched chunks, cut back into scenes
+dart ../../../scripts/tts.dart          # the local voice, line by line
 dart ../../../scripts/check.dart        # accent, likeness, words per scene
-dart ../../../scripts/tts.dart reroll   # only chunks holding a failed scene, next seed
+dart ../../../scripts/pad.dart 0.6
+dart ../../../scripts/layout.dart
 ```
 
-Repeat check and reroll until `check/bad.txt` is empty.
-A ⚠ name flag ("Clod Code") is fine: subtitles show the script text, so never re-roll for it.
-Then `dart ../../../scripts/pad.dart 0.6` and `dart ../../../scripts/layout.dart`.
+`tts.dart` keeps each voiced line, so after a script edit it voices only the lines that changed.
+`check.dart` runs the same gates on the draft.
+A local voice gives the same take for the same text, so fix a failed scene by respelling its line in `tts` and running `tts.dart` again.
+A ⚠ name flag ("Clod Code") is fine: subtitles show the script text.
 With a puppet, `layout.dart` also times its mouth from the narration alone (README Puppet), so a clip of someone else talking never moves it.
 
 Done when `check/bad.txt` is empty and `src/layout.json` exists.
+
+Then ask the user to listen to a draft render.
+Switch to FINAL only after they say the draft is good:
+
+```sh
+zsh ../../../scripts/voice-mode.sh final            # prints the credit estimate; calls nothing
+dart ../../../scripts/tts.dart --dry-run            # optional: each request it would send; calls nothing
+dart ../../../scripts/tts.dart                      # ElevenLabs is billed from here on
+dart ../../../scripts/check.dart
+dart ../../../scripts/tts.dart reroll               # only chunks holding a failed scene, next seed
+```
+
+Repeat check and reroll until `check/bad.txt` is empty.
+Then run `pad.dart 0.6` and `layout.dart` again, and render once.
+`voice-mode.sh draft` goes back to the free voice; `voice-mode.sh status` shows which one is active.
+
+Done when `voice-mode.sh status` says `FINAL`, `check/bad.txt` is empty, and `src/layout.json` exists.
 
 ## 6. Build the scenes
 
@@ -104,11 +136,17 @@ ffmpeg -i out/video.mp4 -vf "fps=1/7,scale=384:-1,tile=6x5" -frames:v 1 out/shee
 ```
 
 Done when loudness reads about -16 LUFS and the frame sheet shows every scene; every re-render repeats this check.
+Render drafts the same way: they cost no credits.
 
 ## 8. Deliver
 
-Every render is a new version: copy `out/video.mp4` to `videos/NN-short-name/<title> vN.mp4`, with N one above the highest version in the folder (`v1` for the first).
-Then rename each older version to start with `zz ` (`zz <title> v1.mp4`), so the newest sorts first.
-Delivered files are permanent: a delivered `.mp4` is never overwritten, and only the user deletes the `zz` ones, when they ask.
+Every render is a new version.
+
+- A draft render (voice mode DRAFT) is named `<title> draft vN.mp4`. It is for the user to review: never upload it.
+- The final render (voice mode FINAL) is named `<title> vN.mp4`.
+- Copy `out/video.mp4` to `videos/NN-short-name/` with that name. N is 1 above the highest version of that kind in the folder (`v1` for the first).
+- After a final lands, rename each older final to start with `zz ` (`zz <title> v1.mp4`), so the newest sorts first. Give the drafts a `zz ` too.
+- Delivered files are permanent: a delivered `.mp4` is never overwritten, and only the user deletes the `zz` ones, when they ask.
+
 Open the new version for the user and give them its path.
-The YouTube upload waits for "test pass"; [`UPLOAD.md`](UPLOAD.md) builds its title, description, and settings.
+The YouTube upload waits for "test pass" and uses the final only; [`UPLOAD.md`](UPLOAD.md) builds its title, description, and settings.

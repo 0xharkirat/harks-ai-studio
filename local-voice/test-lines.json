@@ -1,0 +1,44 @@
+[
+ {
+  "n": "01",
+  "scene": "intro",
+  "i": 0,
+  "tts": "Yo, what's up guys? I'm Hark's A I.",
+  "say": "Yo, what's up guys? I'm Hark's AI."
+ },
+ {
+  "n": "02",
+  "scene": "intro",
+  "i": 1,
+  "tts": "Hark just fixed the EagleEye nightly scan, so a retry only reruns what failed.",
+  "say": "Hark just fixed the EagleEye nightly scan, so a retry only reruns what failed."
+ },
+ {
+  "n": "03",
+  "scene": "pain",
+  "i": 1,
+  "tts": "When GitHub fails, the retry runs both again. In Hark's test, Email re-read one thousand two hundred and eighty emails, and the retry took eighty seconds.",
+  "say": "When GitHub fails, the retry runs both again. In Hark's test, Email re-read 1,280 emails, and the retry took 80 seconds."
+ },
+ {
+  "n": "04",
+  "scene": "fix",
+  "i": 1,
+  "tts": "It skips Email, and reruns only GitHub. The same retry took three seconds.",
+  "say": "It skips Email, and reruns only GitHub. The same retry took 3 seconds."
+ },
+ {
+  "n": "05",
+  "scene": "outro",
+  "i": 0,
+  "tts": "Summary, a retry now reruns only the scan that failed, in three seconds, not eighty.",
+  "say": "Summary, a retry now reruns only the scan that failed, in 3 seconds, not 80."
+ },
+ {
+  "n": "06",
+  "scene": "outro",
+  "i": 1,
+  "tts": "This was Hark's A I, signing off.",
+  "say": "This was Hark's AI, signing off."
+ }
+]

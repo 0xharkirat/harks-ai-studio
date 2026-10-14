@@ -14,6 +14,15 @@ assets/brand/
 videos/
 voice-tests/
 
+# Local draft voice: the venv, the model, the Hugging Face cache and every output are rebuilt by scripts/setup-local-voice.sh
+local-voice/.venv/
+local-voice/models/
+local-voice/hf/
+local-voice/out/
+local-voice/.whisper-python
+local-voice/__pycache__/
+assets/voice/ref_energetic.wav
+
 # Regenerable from the mp3 next to it
 assets/music/*.wav
 

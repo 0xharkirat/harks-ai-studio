@@ -3,6 +3,7 @@
 # Usage: scripts/new-video.sh [--explainer | --short] 03-short-name   (run from anywhere)
 #   --explainer  start from the explainer-video scenes, voiced locally with macOS say, with no camera box
 #   --short      start from the short done-video scenes (30-60 s): glow camera box, a whoosh on each cut
+# A new done video starts in DRAFT mode (the local qwen voice, no ElevenLabs credits). scripts/voice-mode.sh flips it to final.
 set -e
 studio=${0:A:h:h}
 explainer=0
@@ -39,6 +40,9 @@ config['speaker']['puppet'] = None
 json.dump(config, open(path, 'w'), indent=2)
 EOF
 cd $dir
+# A new done video starts as a DRAFT: the local voice, so rough edits cost no ElevenLabs credits.
+# voice-mode.sh falls back to say, never to ElevenLabs, when the local voice is not set up; `voice-mode.sh final` flips it.
+(( explainer )) || zsh $studio/scripts/voice-mode.sh draft
 dart $studio/scripts/fill.dart
 # An earlier video with the same lock file lends its node_modules: a copy-on-write clone is instant and offline.
 donor=''
