@@ -1,0 +1,266 @@
+[
+ {
+  "n": "01",
+  "say": "Yo, what's up guys? I'm Hark's AI.",
+  "elevenlabs": {
+   "sec": 3.2809583333333334,
+   "tail_raw": -178.94494946284,
+   "tail": -36.672312348734415,
+   "rise_raw": 206.7772401911362,
+   "rise": -18.937853114483563,
+   "f0": 205.0,
+   "match": 0.64,
+   "indian": 0.0,
+   "us": 0.0,
+   "wer": 0.14285714285714285,
+   "heard": "Yo, what's up guys? I'm Harkx AI.",
+   "pass": {
+    "us": true,
+    "match": false,
+    "wer": true,
+    "tail": 1.0,
+    "rise": true
+   }
+  },
+  "qwen": {
+   "sec": 3.36,
+   "tail_raw": -83.81822659993591,
+   "tail": -32.220330445973566,
+   "rise_raw": 37.35723620361092,
+   "rise": -69.16185161351453,
+   "f0": 174.0,
+   "match": 0.48,
+   "indian": 0.24,
+   "us": 0.0,
+   "wer": 0.14285714285714285,
+   "heard": "Yo, what's up guys? I'm harks AI",
+   "pass": {
+    "us": true,
+    "match": false,
+    "wer": true,
+    "tail": 1.0,
+    "rise": true
+   }
+  }
+ },
+ {
+  "n": "02",
+  "say": "Hark just fixed the EagleEye nightly scan, so a retry only reruns what failed.",
+  "elevenlabs": {
+   "sec": 5.67,
+   "tail_raw": -83.64432372341518,
+   "tail": -38.786063533568196,
+   "rise_raw": 3.7593910949844602,
+   "rise": -210.42259410969393,
+   "f0": 199.0,
+   "match": 0.69,
+   "indian": 1.0,
+   "us": 0.0,
+   "wer": 0.0,
+   "heard": "HART just fixed the eagle eye nightly scan. So, a retry only reruns what failed.",
+   "pass": {
+    "us": true,
+    "match": true,
+    "wer": true,
+    "tail": 1.0,
+    "rise": true
+   }
+  },
+  "qwen": {
+   "sec": 6.96,
+   "tail_raw": -82.3457641722534,
+   "tail": -34.165879732271904,
+   "rise_raw": -124.74247488638116,
+   "rise": -35.23149942730563,
+   "f0": 168.0,
+   "match": 0.75,
+   "indian": 1.0,
+   "us": 0.0,
+   "wer": 0.0,
+   "heard": "Hark just fixed the Eagle Eye nightly scan, so a retry only reruns what failed.",
+   "pass": {
+    "us": true,
+    "match": true,
+    "wer": true,
+    "tail": 1.0,
+    "rise": true
+   }
+  }
+ },
+ {
+  "n": "03",
+  "say": "When GitHub fails, the retry runs both again. In Hark's test, Email re-read 1,280 emails, and the retry took 80 seconds.",
+  "elevenlabs": {
+   "sec": 9.864833333333333,
+   "tail_raw": -84.20603001419624,
+   "tail": -36.22557426766856,
+   "rise_raw": -8.710335792200192,
+   "rise": -4.984521394925338,
+   "f0": 194.0,
+   "match": 0.71,
+   "indian": 0.99,
+   "us": 0.0,
+   "wer": 0.09090909090909091,
+   "heard": "When GitHub fails, the retry runs both again. In Hark's test, email reread 1280 emails and the retry took 80 seconds.",
+   "pass": {
+    "us": true,
+    "match": true,
+    "wer": true,
+    "tail": 1.0,
+    "rise": true
+   }
+  },
+  "qwen": {
+   "sec": 9.04,
+   "tail_raw": -38.983296522986926,
+   "tail": -38.983296522986926,
+   "rise_raw": -41.02246816606206,
+   "rise": -32.90150602587629,
+   "f0": 162.0,
+   "match": 0.74,
+   "indian": 0.56,
+   "us": 0.0,
+   "wer": 0.09090909090909091,
+   "heard": "When GitHub fails, the retry runs both again. In Hark's test, email reread 1280 emails and the retry took 80 seconds.",
+   "pass": {
+    "us": true,
+    "match": true,
+    "wer": true,
+    "tail": 1.0,
+    "rise": true
+   }
+  }
+ },
+ {
+  "n": "04",
+  "say": "It skips Email, and reruns only GitHub. The same retry took 3 seconds.",
+  "elevenlabs": {
+   "sec": 5.593833333333333,
+   "tail_raw": -80.19886584842428,
+   "tail": -33.69497070337943,
+   "rise_raw": -98.56074587926815,
+   "rise": -98.56074587926787,
+   "f0": 193.0,
+   "match": 0.63,
+   "indian": 0.99,
+   "us": 0.0,
+   "wer": 0.0,
+   "heard": "It skips email and reruns only GitHub. The same retry took 3 seconds.",
+   "pass": {
+    "us": true,
+    "match": false,
+    "wer": true,
+    "tail": 1.0,
+    "rise": true
+   }
+  },
+  "qwen": {
+   "sec": 6.16,
+   "tail_raw": -39.38955761119595,
+   "tail": -37.40941997083285,
+   "rise_raw": -41.174997003726894,
+   "rise": -41.174997003726695,
+   "f0": 179.0,
+   "match": 0.74,
+   "indian": 1.0,
+   "us": 0.0,
+   "wer": 0.0,
+   "heard": "It skips email and reruns only GitHub. The same retry took 3 seconds.",
+   "pass": {
+    "us": true,
+    "match": true,
+    "wer": true,
+    "tail": 1.0,
+    "rise": true
+   }
+  }
+ },
+ {
+  "n": "05",
+  "say": "Summary, a retry now reruns only the scan that failed, in 3 seconds, not 80.",
+  "elevenlabs": {
+   "sec": 6.061958333333333,
+   "tail_raw": -176.0284326477726,
+   "tail": -35.0794239130656,
+   "rise_raw": 181.403685471284,
+   "rise": -89.71173588354331,
+   "f0": 200.0,
+   "match": 0.69,
+   "indian": 1.0,
+   "us": 0.0,
+   "wer": 0.0,
+   "heard": "Summary, a retry now reruns only the scan that failed in 3 seconds, not 80.",
+   "pass": {
+    "us": true,
+    "match": true,
+    "wer": true,
+    "tail": 1.0,
+    "rise": true
+   }
+  },
+  "qwen": {
+   "sec": 7.6,
+   "tail_raw": -80.82983149775244,
+   "tail": -34.400263525600906,
+   "rise_raw": 105.87838772534006,
+   "rise": -160.46397856103232,
+   "f0": 159.0,
+   "match": 0.75,
+   "indian": 1.0,
+   "us": 0.0,
+   "wer": 0.06666666666666667,
+   "heard": "Summary, retry now reruns only the scan that failed in 3 seconds not 80.",
+   "pass": {
+    "us": true,
+    "match": true,
+    "wer": true,
+    "tail": 1.0,
+    "rise": true
+   }
+  }
+ },
+ {
+  "n": "06",
+  "say": "This was Hark's AI, signing off.",
+  "elevenlabs": {
+   "sec": 2.816375,
+   "tail_raw": -82.93328073778804,
+   "tail": -45.5507177983208,
+   "rise_raw": -3.072933185263499,
+   "rise": -3.0729331852633517,
+   "f0": 199.0,
+   "match": 0.6,
+   "indian": 0.05,
+   "us": 0.0,
+   "wer": 0.16666666666666666,
+   "heard": "This was Harkx AI, signing off.",
+   "pass": {
+    "us": true,
+    "match": false,
+    "wer": true,
+    "tail": 1.0,
+    "rise": true
+   }
+  },
+  "qwen": {
+   "sec": 3.36,
+   "tail_raw": -55.523772278415954,
+   "tail": -44.2686289604903,
+   "rise_raw": 4.936914614505297,
+   "rise": 4.936914614505115,
+   "f0": 177.0,
+   "match": 0.56,
+   "indian": 0.41,
+   "us": 0.0,
+   "wer": 0.0,
+   "heard": "This was Hark's AI signing off.",
+   "pass": {
+    "us": true,
+    "match": false,
+    "wer": true,
+    "tail": 1.0,
+    "rise": true
+   }
+  }
+ }
+]

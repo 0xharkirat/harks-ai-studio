@@ -1,0 +1,50 @@
+{
+ "model": "mlx-community/Qwen3-TTS-12Hz-1.7B-Base-bf16",
+ "hf_home": "/Users/hark/Movies/done-video-research/qwen-test/hf",
+ "ref_audio": "/Users/hark/Movies/done-video-research/qwen-test/ref2/ref_energetic.wav",
+ "ref_text": "To create a new page, I have to create a new file like this and then I have to write front matter. So this is the process of creating a new page.",
+ "lang_code": "en",
+ "sampling": {
+  "temperature": 0.95,
+  "top_k": 100,
+  "top_p": 0.95,
+  "repetition_penalty": 1.5,
+  "max_tokens": 1200
+ },
+ "mode": "sentences",
+ "gap_ms": 450,
+ "attempts": 4,
+ "seed_base": 1000,
+ "gates": {
+  "tail_db_max": -32.0,
+  "rise_hz_max": 12.0,
+  "wer_max": 0.2,
+  "us_max": 0.2,
+  "match_min_scene": 0.65,
+  "note": "us and match come from the studio voicecheck.py at scene level; tail, rise, WER are checked inside qwen_server.py"
+ },
+ "whisper_model": "medium.en",
+ "whisper_python": "/Users/hark/.pyenv/versions/3.10.19/bin/python3",
+ "ref_source": "assets/voice/hark_fumadocs_a.mp3 37.31-49.04 s, mono 24 kHz, no processing",
+ "line_gap_ms": 400,
+ "select": "best_energy",
+ "level_db": -19.0,
+ "min_sentence_words": 5,
+ "pause_rule": {
+  "between_sentences_ms": 450,
+  "between_lines_ms": 400,
+  "min_sentence_words": 5,
+  "note": "sentences voiced as separate takes and joined with exact silence; a sentence under 5 words merges into its neighbour; scene = lines joined with 400 ms (same as round 7)"
+ },
+ "retry_policy": "4 attempts per take (per sentence in sentences mode); if none pass, send the request again with a new seed. Line 01 failed one 4-take group and passed the next.",
+ "loudness": "level_db -19 = one gain to speech RMS -19 dBFS (ElevenLabs lines average -19.2)",
+ "selection": "among takes that pass the gates, keep the highest F0 std in semitones (gates.f0_track)",
+ "server": {
+  "script": "/Users/hark/Movies/done-video-research/qwen-test/qwen_server.py",
+  "python": "/Users/hark/Movies/done-video-research/qwen-test/.venv/bin/python",
+  "env": {
+   "HF_HOME": "/Users/hark/Movies/done-video-research/qwen-test/hf"
+  },
+  "contract": "see docstring at the top of qwen_server.py"
+ }
+}

@@ -12,6 +12,7 @@ The puppet, accent tag, voice profile, and accent and likeness gates are all opt
 A video has two voice modes.
 DRAFT is the local Qwen3-TTS clone of the speaker: free, and the voice for every rough edit.
 FINAL is the ElevenLabs clone: billed, and used once, after the user says the draft is good.
+To voice one line outside a video in the free local voice, run `local-voice/speak.sh "text" out.wav` (`local-voice/README.md`, "Voice one line from any agent").
 On "test pass" for a PBI whose video is already rendered, follow [`UPLOAD.md`](UPLOAD.md) in place of the steps below.
 
 ## 0. Preflight

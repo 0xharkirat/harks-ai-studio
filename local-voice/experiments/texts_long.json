@@ -1,0 +1,6 @@
+{
+ "long": {
+  "tts": "In Hark's test, Email re-read one thousand two hundred and eighty emails, and the retry took eighty seconds. Summary, a retry now reruns only the scan that failed, in three seconds, not eighty.",
+  "say": "In Hark's test, Email re-read 1,280 emails, and the retry took 80 seconds. Summary, a retry now reruns only the scan that failed, in 3 seconds, not 80."
+ }
+}

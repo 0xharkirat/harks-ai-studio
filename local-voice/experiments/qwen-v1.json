@@ -1,0 +1,28 @@
+{
+ "model": "mlx-community/Qwen3-TTS-12Hz-1.7B-Base-8bit",
+ "hf_home": "/Users/hark/Movies/done-video-research/qwen-test/hf",
+ "ref_audio": "/Users/hark/Movies/done-video-research/qwen-test/voice/ref.wav",
+ "ref_text": "I have to go back to Visual Studio Code. This is VS Code. You can see then I have to open the file and start writing something here.",
+ "lang_code": "en",
+ "sampling": {
+  "temperature": 0.7,
+  "top_k": 50,
+  "top_p": 1.0,
+  "repetition_penalty": 1.5,
+  "max_tokens": 1200
+ },
+ "mode": "single",
+ "gap_ms": 450,
+ "attempts": 4,
+ "seed_base": 1000,
+ "gates": {
+  "tail_db_max": -32.0,
+  "rise_hz_max": 12.0,
+  "wer_max": 0.2
+ },
+ "whisper_model": "medium.en",
+ "whisper_python": "/Users/hark/.pyenv/versions/3.10.19/bin/python3",
+ "ref_source": "assets/voice/hark_fumadocs_a.mp3 37.31-49.04 s, mono 24 kHz, no processing",
+ "line_gap_ms": 400,
+ "select": "first_pass"
+}

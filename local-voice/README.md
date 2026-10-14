@@ -25,8 +25,10 @@ Disk: about 6 GB. The script warns under 15 GB free.
 |---|---|---|
 | `qwen.json` | The voice settings (model, reference clip and text, sampling, gates) | yes |
 | `qwen_server.py` | The helper. `tts.dart` starts it once and sends it one JSON line per voice line. The docstring is the contract | yes |
+| `speak.sh` | Voices one line from the shell or from any agent (see "Voice one line from any agent") | yes |
 | `gates.py`, `wer.py`, `whisper_worker.py` | Checks the helper runs on each take | yes |
 | `metrics.py`, `voice_lines.py`, `test-lines.json`, `baselines/` | Energy diagnosis (below) | yes |
+| `experiments/` | The round 7 and 8 scripts, kept for reference (see "Experiment scripts") | yes |
 | `requirements.txt` | Pinned packages | yes |
 | `.venv/`, `models/`, `hf/`, `out/`, `.whisper-python` | Rebuilt by setup | no |
 
@@ -49,6 +51,37 @@ Quality setting: `tts.qwen.attempts` in the video's `src/config.json`.
 Set `attempts` to 4 when you compare the voice with ElevenLabs.
 The times are one run each on an Apple M5, with the GPU free, and `check.dart` adds about 3 minutes (Whisper on the CPU).
 A second run of the same script takes 2 s, because every line is cached. Editing 1 line takes about 2.5 min, most of it loading the model and Whisper.
+
+## Voice one line from any agent
+
+Any agent or shell can use the local voice without a video project.
+
+```sh
+local-voice/speak.sh "Hark just built a demo portal for S S W Eagle Eye." out.wav
+local-voice/speak.sh "A quick check." out.wav 1      # attempts: 1 is fastest, 4 is full quality
+```
+
+1. Set up once: `scripts/setup-local-voice.sh` (it ends with `Ready:`).
+2. Run `speak.sh` from any folder. The path of `out.wav` can be relative.
+3. Read the one line it prints: `ok <file> takes=N tail_db=… rise_hz=… wer=…`.
+
+The exit code is 0 when the file is written, 1 when the input is bad or the voicing failed, and 2 when the local voice is not set up.
+It loads the model on every call, so a short line takes about 20-60 s (17 s for one sentence at attempts 1 on an M5). To voice many lines, use `tts.dart` in a video project, which loads the model once.
+The `wer` number compares what Whisper heard with the text you passed. Spelled-out letters ("S S W") raise it, so read it as a hint, not a verdict.
+The call is free. It uses no network and never calls ElevenLabs.
+
+Rules for the text:
+- Spell out what the voice must say: "S S W", "A P I", numbers in words.
+- The attempts setting defaults to the value in `qwen.json`. Pass `1` for a quick check only.
+- A clip you publish in this voice must say it is Hark's AI ("I'm Hark's AI" up front).
+- This is the DRAFT voice. Use the ElevenLabs final for a video that is delivered.
+
+## Experiment scripts
+
+`experiments/` holds the scripts and data from rounds 7 and 8 (`run_exp.py`, `score_exp.py`, `refsel.py`, `build_round8.py`, `qwen_server_v1.py`, the `qwen-v1.json` and `qwen-v2.json` settings, the line lists).
+They are kept so the lever tests can be repeated or changed. They are reference code, not tested here.
+Some paths in them point at the old scratch folder (`~/Movies/done-video-research/qwen-test`) that was deleted, so update the paths before you run one.
+For new tests, start from `voice_lines.py` and `metrics.py` above.
 
 ## Measure the energy
 

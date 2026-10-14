@@ -1,0 +1,180 @@
+{
+ "state": {
+  "01": {
+   "tries": [
+    {
+     "sec": 3.36,
+     "tail_raw": -83.81822659993591,
+     "tail": -32.220330445973566,
+     "rise_raw": 37.35723620361092,
+     "rise": -69.16185161351453,
+     "f0": 177.77777777777777,
+     "wer": 0.14285714285714285,
+     "heard": "Yo, what's up guys? I'm harks AI",
+     "attempt": 1,
+     "ok_tail": 1.0,
+     "ok_rise": true,
+     "ok_wer": true,
+     "ok": true
+    }
+   ],
+   "done": true,
+   "best": 1
+  },
+  "02": {
+   "tries": [
+    {
+     "sec": 6.08,
+     "tail_raw": -76.0904762184076,
+     "tail": -40.547253934561205,
+     "rise_raw": -6.79570988179776,
+     "rise": 33.01503222889903,
+     "f0": 164.3835616438356,
+     "wer": 0.07142857142857142,
+     "heard": "HART just fixed the EagleEye nightly scan so a retry only reruns what failed.",
+     "attempt": 1,
+     "ok_tail": 1.0,
+     "ok_rise": false,
+     "ok_wer": true,
+     "ok": false
+    },
+    {
+     "sec": 6.96,
+     "tail_raw": -82.3457641722534,
+     "tail": -34.165879732271904,
+     "rise_raw": -124.74247488638116,
+     "rise": -35.23149942730563,
+     "f0": 167.83216783216784,
+     "wer": 0.14285714285714285,
+     "heard": "Hark just fixed the Eagle Eye nightly scan, so a retry only reruns what failed.",
+     "attempt": 2,
+     "ok_tail": 1.0,
+     "ok_rise": true,
+     "ok_wer": true,
+     "ok": true
+    }
+   ],
+   "done": true,
+   "best": 2
+  },
+  "03": {
+   "tries": [
+    {
+     "sec": 9.04,
+     "tail_raw": -38.983296522986926,
+     "tail": -38.983296522986926,
+     "rise_raw": -41.02246816606206,
+     "rise": -32.90150602587629,
+     "f0": 164.3835616438356,
+     "wer": 0.17391304347826086,
+     "heard": "When GitHub fails, the retry runs both again.\nIn Hark's test, email reread 1280 emails and the retry took 80 seconds.",
+     "attempt": 1,
+     "ok_tail": 1.0,
+     "ok_rise": true,
+     "ok_wer": true,
+     "ok": true
+    }
+   ],
+   "done": true,
+   "best": 1
+  },
+  "04": {
+   "tries": [
+    {
+     "sec": 6.16,
+     "tail_raw": -39.38955761119595,
+     "tail": -37.40941997083285,
+     "rise_raw": -41.174997003726894,
+     "rise": -41.174997003726695,
+     "f0": 179.1044776119403,
+     "wer": 0.0,
+     "heard": "It skips email and reruns only GitHub.\nThe same retry took 3 seconds.",
+     "attempt": 1,
+     "ok_tail": 1.0,
+     "ok_rise": true,
+     "ok_wer": true,
+     "ok": true
+    }
+   ],
+   "done": true,
+   "best": 1
+  },
+  "05": {
+   "tries": [
+    {
+     "sec": 7.6,
+     "tail_raw": -80.82983149775244,
+     "tail": -34.400263525600906,
+     "rise_raw": 105.87838772534006,
+     "rise": -160.46397856103232,
+     "f0": 160.0,
+     "wer": 0.06666666666666667,
+     "heard": "Summary, retry now reruns only the scan that failed in 3 seconds not 80.",
+     "attempt": 1,
+     "ok_tail": 1.0,
+     "ok_rise": true,
+     "ok_wer": true,
+     "ok": true
+    }
+   ],
+   "done": true,
+   "best": 1
+  },
+  "06": {
+   "tries": [
+    {
+     "sec": 3.68,
+     "tail_raw": -44.111444323001585,
+     "tail": -44.111444323001585,
+     "rise_raw": 30.64929811991467,
+     "rise": 30.64929811991463,
+     "f0": 186.04651162790697,
+     "wer": 0.16666666666666666,
+     "heard": "this was harks AI signing off",
+     "attempt": 1,
+     "ok_tail": 1.0,
+     "ok_rise": false,
+     "ok_wer": true,
+     "ok": false
+    },
+    {
+     "sec": 3.36,
+     "tail_raw": -55.523772278415954,
+     "tail": -44.2686289604903,
+     "rise_raw": 4.936914614505297,
+     "rise": 4.936914614505115,
+     "f0": 177.12418300653593,
+     "wer": 0.0,
+     "heard": "This was Hark's AI signing off.",
+     "attempt": 2,
+     "ok_tail": 1.0,
+     "ok_rise": true,
+     "ok_wer": true,
+     "ok": true
+    }
+   ],
+   "done": true,
+   "best": 2
+  }
+ },
+ "runs": [
+  {
+   "round": 1,
+   "rc": 0,
+   "rss": 3341434880,
+   "footprint": 15174864232,
+   "err_lines": [
+    "[transformers] You are using a model of type `qwen3_tts` to instantiate a model of type ``. This may be expected if you are loading a checkpoint that shares a subset of the architecture (e.g., loading a `sam2_video` checkpoint into `Sam2Model`), but is otherwise not supported and can yield errors. Please verify that the checkpoint is compatible with the model you are instantiating."
+   ]
+  },
+  {
+   "round": 2,
+   "rc": 0,
+   "rss": 3341762560,
+   "footprint": 15855570208,
+   "err_lines": [
+    "[transformers] You are using a model of type `qwen3_tts` to instantiate a model of type ``. This may be expected if you are loading a checkpoint that shares a subset of the architecture (e.g., loading a `sam2_video` checkpoint into `Sam2Model`), but is otherwise not supported and can yield errors. Please verify that the checkpoint is compatible with the model you are instantiating."
+   ]
+  }
+ ]
+}
