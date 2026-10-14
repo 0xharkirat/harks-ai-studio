@@ -5,8 +5,10 @@ import 'dart:io';
 //   words  - Whisper transcript vs script; a misheard name ("Clod Code") is only flagged,
 //            because captions always show the script text
 //   accent - US English share must stay under gate.max_us (skipped when null)
-//   voice  - speaker likeness vs assets/voice/reference must stay over gate.min_match (skipped when null)
-// The accent and voice gates measure the clone, so a local voice (tts.provider other than elevenlabs) skips them.
+//   voice  - speaker likeness vs assets/voice/reference must stay over gate.min_match (skipped when null,
+//            and on a scene under 4 s, where ECAPA scores every voice low)
+// The accent and voice gates run whenever `gate` is configured, for ElevenLabs and a local clone (qwen) alike.
+// Only `say` skips them, because it is a stock voice, not a clone of Hark.
 // Failing scene ids go to check/bad.txt; `dart tts.dart reroll` redoes only those.
 //
 //   dart check.dart            # every scene
@@ -19,8 +21,10 @@ String configFile(String studio) => File('src/config.json').existsSync()
     ? 'src/config.json'
     : (Process.runSync('zsh', ['$studio/scripts/config-path.sh']).stdout as String).trim();
 final config = jsonDecode(File(configFile(studio)).readAsStringSync()) as Map;
-final clone = ((config['tts'] as Map?)?['provider'] ?? 'elevenlabs') == 'elevenlabs';
-final gate = clone ? config['gate'] as Map : const {};
+final provider = (config['tts'] as Map?)?['provider'] ?? 'elevenlabs';
+final clone = provider == 'elevenlabs';
+final gate = provider == 'say' ? const {} : (config['gate'] as Map?) ?? const {};
+const minLikenessSeconds = 4;
 
 String norm(String s) => s
     .toLowerCase()
@@ -78,11 +82,12 @@ void main(List<String> args) {
     final got = heard.replaceAllMapped(names, (m) => m[0]!.startsWith('ha') ? 'hark' : 'claude').split(' ');
     final wer = distance(want, got) / want.length;
     final [match, indian, us] = voice[audioOf(id).split('/').last] ?? [double.nan, double.nan, double.nan];
+    final seconds = double.parse((Process.runSync('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', audioOf(id)]).stdout as String).trim());
     final notes = [if (misheard) '⚠ name said differently (captions are still right)'];
     final problems = [
       if (wer >= 0.2) 'words off (${(wer * 100).round()}%)',
       if (gate['max_us'] != null && !(us <= gate['max_us'])) 'American ${(us * 100).round()}%',
-      if (gate['min_match'] != null && !(match >= gate['min_match'])) 'less like the speaker (${match.toStringAsFixed(2)})',
+      if (gate['min_match'] != null && seconds >= minLikenessSeconds && !(match >= gate['min_match'])) 'less like the speaker (${match.toStringAsFixed(2)})',
     ];
     if (problems.isNotEmpty) bad.add(id);
     final scores = checkVoice ? 'match ${match.toStringAsFixed(2)}  indian ${(indian * 100).round()}%  us ${(us * 100).round()}%  ' : '';
