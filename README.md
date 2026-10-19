@@ -11,6 +11,7 @@ The write-up with copy-paste prompts: [harksingh.com/posts/harks-ai-voice-clone]
 - [Make it yours](#make-it-yours)
 - [Usage](#usage)
 - [Edit a finished video](#edit-a-finished-video)
+- [Reinstall an old video](#reinstall-an-old-video)
 - [API key permissions](#api-key-permissions)
 - [Voice recipe](#voice-recipe)
 - [Draft and final](#draft-and-final)
@@ -35,7 +36,7 @@ The narrator always introduces itself as your AI, so nobody mistakes the clone f
 - macOS or Linux with [Claude Code](https://claude.com/claude-code)
 - An [ElevenLabs](https://elevenlabs.io) plan with Instant Voice Cloning (Starter or above), needed only for the final voice
 - For the free local draft voice: an Apple Silicon Mac with about 6 GB of disk
-- Node 22, Dart 3, ffmpeg, Python 3.11 via `uv`, Whisper, and `yt-dlp`
+- Node 22, pnpm, Dart 3, ffmpeg, Python 3.11 via `uv`, Whisper, and `yt-dlp`
 - For the talking camera box on Apple Silicon: Rosetta 2, which runs Rhubarb Lip Sync
 - A few minutes of public video of you talking alone, with no music
 
@@ -46,7 +47,7 @@ git clone https://github.com/0xharkirat/harks-ai-studio ~/done-video-studio
 ln -s ~/done-video-studio ~/.claude/skills/done-video
 ln -s ~/done-video-studio/explainer-video ~/.claude/skills/explainer-video
 
-brew install ffmpeg node dart uv pipx yt-dlp && pipx install openai-whisper
+brew install ffmpeg node pnpm dart uv pipx yt-dlp && pipx install openai-whisper
 cd ~/done-video-studio
 uv venv -p 3.11 .venv && VIRTUAL_ENV=.venv uv pip install speechbrain librosa "setuptools<70" "huggingface_hub<0.26"
 ```
@@ -143,6 +144,20 @@ dart ../../../scripts/layout.dart
 
 `build` reuses every line whose text is unchanged, so a one-line fix costs about 100 credits.
 It plays each new line back through Whisper and prints what it heard next to the script.
+
+## Reinstall an old video
+
+A video without `node_modules` (for example after you freed disk space) needs its packages again.
+Run this from the video's `project` folder:
+
+```sh
+cd videos/NN-name/project && zsh ../../../scripts/install-deps.sh
+```
+
+It converts an old `package-lock.json` to `pnpm-lock.yaml` and keeps the same versions.
+It also links `node_modules/.remotion` to `.cache/remotion-browser`, so every video shares one Chrome Headless Shell.
+Remotion downloads that browser (about 100 MB) once, on the first render of any video.
+Run the script again at any time: it is safe to repeat.
 
 ## API key permissions
 

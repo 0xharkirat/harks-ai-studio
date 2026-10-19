@@ -66,7 +66,7 @@ Build them from `Title`, `Heading`, `Diagram`, and `CodeWalk` in `src/explain.ts
 - Keep every part above y 880, so the subtitles stay clear.
 - `$STUDIO/examples/03-git-rebase-explainer/` is a finished explainer.
 
-Check a still at the end of each scene: `npx remotion still src/index.ts Video out/s.png --frame=<n>`.
+Check a still at the end of each scene: `pnpm exec remotion still src/index.ts Video out/s.png --frame=<n>`.
 
 Done when the still at the end of every scene shows each part its lines name, and nothing overlaps the subtitles.
 

@@ -23,6 +23,7 @@ On "test pass" for a PBI whose video is already rendered, follow [`UPLOAD.md`](U
 - For the final only: `voice_id` in the config is a real clone, not the placeholder; if not, see README "Make it yours".
 - If the config sets `gate`, `$STUDIO/.venv/bin/python -c "import speechbrain, librosa"` works; if not, run the venv line from README Install.
 - `whisper --help` works.
+- `pnpm --version` works; if not, `brew install pnpm`.
 - If the config sets `speaker.puppet` on Apple Silicon, `arch -x86_64 /usr/bin/true` works (Rosetta 2, for Rhubarb Lip Sync); if not, `softwareupdate --install-rosetta --agree-to-license`.
 
 Done when every check passes.
@@ -42,6 +43,7 @@ From `$STUDIO`: `scripts/new-video.sh NN-short-name`, where NN is the next numbe
 It copies the template, snapshots the config into `src/config.json` (the voice tools then use that, so a later recipe change never alters this video), builds the camera-box puppet from `speaker.puppet`, and fills the speaker's name into `script.json`.
 The video starts in DRAFT: `tts.provider` is `qwen`.
 If the local voice is not set up, it says so in one line and uses `say`.
+It installs the packages with pnpm (`scripts/install-deps.sh`): files come from one store, and every video shares one Chrome for Remotion in `.cache/remotion-browser`.
 It ends by printing `Ready:`; without that line it failed, and it removes the half-built folder itself.
 Run every later command from `videos/NN-short-name/project`.
 
@@ -124,14 +126,14 @@ Open the bad example and the fix each with a black title card: `"black": 1.2, "c
 Mark good and bad examples with the one `SswTag` lower third: `✅ Good example` or `❌ Bad example` in `lead`, and `sound="good"` or `sound="bad"`.
 For a sound effect `assets/sfx/` lacks, find a free one on YouTube first (`yt-dlp --flat-playlist "ytsearch10:<effect> sound effect no copyright"`), pick one whose title or description allows free use, download the audio only (`yt-dlp -f bestaudio -x --audio-format wav <url>`), trim it to the hit at -20 LUFS, and add its URL and licence line to `assets/sfx/sources.json`; ElevenLabs sound effects are the fallback when nothing fits.
 `examples/02-voice-clone-tutorial/scenes.tsx` shows every component in use.
-Check frames with `npx remotion still src/index.ts Video out/s.png --frame=<n>`.
+Check frames with `pnpm exec remotion still src/index.ts Video out/s.png --frame=<n>`.
 
 Done when a still from every scene looks right and nothing overlaps the subtitles or the camera box.
 
 ## 7. Render and verify
 
 ```sh
-npx remotion render src/index.ts Video out/video.mp4
+pnpm exec remotion render src/index.ts Video out/video.mp4
 ffmpeg -i out/video.mp4 -af ebur128 -f null - 2>&1 | grep -A1 "Integrated loudness"
 ffmpeg -i out/video.mp4 -vf "fps=1/7,scale=384:-1,tile=6x5" -frames:v 1 out/sheet.jpg
 ```
@@ -145,7 +147,7 @@ Every render is a new version.
 
 - A draft render (voice mode DRAFT) is named `<title> draft vN.mp4`. It is for the user to review: never upload it.
 - The final render (voice mode FINAL) is named `<title> vN.mp4`.
-- Copy `out/video.mp4` to `videos/NN-short-name/` with that name. N is 1 above the highest version of that kind in the folder (`v1` for the first).
+- Move `out/video.mp4` to `videos/NN-short-name/` with that name (`mv`), so the render does not exist twice. N is 1 above the highest version of that kind in the folder (`v1` for the first).
 - After a final lands, rename each older final to start with `zz ` (`zz <title> v1.mp4`), so the newest sorts first. Give the drafts a `zz ` too.
 - Delivered files are permanent: a delivered `.mp4` is never overwritten, and only the user deletes the `zz` ones, when they ask.
 
