@@ -44,16 +44,7 @@ cd $dir
 # voice-mode.sh falls back to say, never to ElevenLabs, when the local voice is not set up; `voice-mode.sh final` flips it.
 (( explainer )) || zsh $studio/scripts/voice-mode.sh draft
 dart $studio/scripts/fill.dart
-# An earlier video with the same lock file lends its node_modules: a copy-on-write clone is instant and offline.
-donor=''
-for p in $studio/videos/*/project(N/); do
-  [[ -d $p/node_modules ]] && cmp -s $p/package-lock.json package-lock.json && { donor=$p; break; }
-done
-if [[ -n $donor ]]; then
-  cp -cR $donor/node_modules . 2>/dev/null || cp -R $donor/node_modules .
-  rm -rf node_modules/.cache   # the donor's bundler cache; this video builds its own
-else
-  npm ci --no-audit --no-fund
-fi
+# pnpm clones every file from one store, and Chrome is shared by every video: see scripts/install-deps.sh.
+zsh $studio/scripts/install-deps.sh
 trap - ERR
 echo "Ready: $dir"
