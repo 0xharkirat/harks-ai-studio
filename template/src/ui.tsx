@@ -488,7 +488,11 @@ export const PermissionPicker: React.FC<{rows: PermRow[]; at: number; every?: nu
 export const at = (cue: number[], i: number) => cue[Math.min(i, cue.length - 1)] ?? 0;
 
 /** Top-right disclosure pill. Keep it on every intro and outro. */
-export const AiBadge: React.FC<{at: number; text?: string}> = ({at: from, text = 'AI voice · made with Claude Code + ElevenLabs'}) => {
+// The disclosure names the voice that made this render: the local draft clone or the ElevenLabs final.
+// A missing provider means ElevenLabs, as in voice-mode.sh.
+const provider = (config as {tts?: {provider?: string}}).tts?.provider ?? 'elevenlabs';
+const voiceMaker = provider === 'elevenlabs' ? 'ElevenLabs' : provider === 'say' ? 'macOS say' : 'a local voice clone';
+export const AiBadge: React.FC<{at: number; text?: string}> = ({at: from, text = `AI voice · made with Claude Code + ${voiceMaker}`}) => {
   const p = useIn(from);
   return (
     <div
