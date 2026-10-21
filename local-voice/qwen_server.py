@@ -21,7 +21,10 @@ Request (stdin), one line each, handled in order:
      "attempts":4,                    optional, takes per request (per sentence in "sentences" mode)
                                       (config "min_sentence_words": sentences shorter than this merge into a neighbour)
      "select":"best_energy"|"first_pass", optional. best_energy = run all attempts, keep the passing take with
-                                      the highest pitch-movement score; first_pass = stop at the first pass
+                                      the highest pitch-movement score; first_pass = stop at the first pass.
+                                      best_energy runs Whisper lazily: takes that pass the tail and rise gates are
+                                      heard in falling energy order until one passes WER, which is the same take
+                                      a full check keeps; the others are heard only when no take passes
      "seed":1234,                     optional base seed; take k uses seed+k
      "params":{"temperature":..,"top_k":..,"top_p":..,"repetition_penalty":..,"max_tokens":..,
                "ref_audio":"/abs.wav","ref_text":"..."},   optional per-request overrides
@@ -43,11 +46,18 @@ last sentence is held to the tail and rise gates, the earlier ones to WER only).
 -50 dB re peak; tail = RMS of the last 60 ms in dB re peak (<= -32); rise = ending F0 slope in Hz over 450 ms
 (<= +12); WER = Whisper medium.en vs "say" (< 0.20). Accent (US <= 0.20) and likeness (match >= 0.65) are
 scene-level checks done by the studio's voicecheck.py, not here.
+In "tries", a take that Whisper did not need to hear has "wer": null and "asr": false. Each take also reports
+"gen_s" and "asr_s" (seconds) and MLX memory in MB: "active_mb", "peak_mb" (during that take) and "cache_mb".
+
+Memory and lifetime: MLX keeps freed buffers in a cache for reuse; config "mlx_cache_mb" caps it (default 512).
+Each sentence gets max_tokens = min(config max_tokens, "max_tokens_floor" + "max_tokens_per_word" x words), so a
+runaway take stops early (the codec makes 12.5 tokens a second; normal speech needs about 5 tokens a word).
+The helper exits by itself after "idle_exit_min" minutes with no request (default 10; 0 = never).
 
 The only audio operations are: trim silence below -50 dB at both ends, join with silence gaps, and (if level_db
 is given) a single gain. No pitch shift, stretch, EQ or compression.
 """
-import os, sys, json, re, time, zlib, argparse, subprocess, pathlib
+import os, sys, json, re, time, zlib, argparse, subprocess, pathlib, threading
 
 HERE = pathlib.Path(__file__).resolve().parent
 STUDIO = HERE.parent
@@ -83,6 +93,9 @@ from mlx_audio.utils import load_audio
 import gates
 
 SR = 24000
+MB = 2 ** 20
+# Without a limit MLX keeps every freed buffer for reuse, and the helper grew to 15 GB on 6 lines.
+mx.set_cache_limit(int(CFG.get("mlx_cache_mb", 512)) * MB)
 model = load_model(CFG["model"])
 mx.eval(model.parameters())
 _ref_cache = {}
@@ -106,6 +119,10 @@ def whisper_python():
 
 
 class Whisper:
+    """openai-whisper on the CPU in fp32, as a separate long-lived worker.
+    MLX Whisper (mlx-audio 0.5.9) was tried on 2026-10-21 and rejected: with medium.en it never stops at the end of
+    the speech and invents text, so every take failed WER. See research/2026-10-21-mlx-whisper-medium-en.md."""
+
     def __init__(self):
         self.p = subprocess.Popen([whisper_python(), str(HERE / "whisper_worker.py"), CFG.get("whisper_model", "medium.en")],
                                   stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True, bufsize=1)
@@ -131,17 +148,34 @@ def energy_score(x):
     return float(np.std(np.clip(st, -12, 12)))
 
 
+def token_cap(text, p):
+    """max_tokens for one text: generous for normal speech (about 3x the slowest pace measured, plus a floor),
+    tight enough that a take which babbles past the end stops early instead of running to 96 s."""
+    words = len(text.split())
+    cap = int(CFG.get("max_tokens_floor", 60)) + int(CFG.get("max_tokens_per_word", 15)) * words
+    return min(int(p["max_tokens"]), cap)
+
+
+def mem_mb():
+    return {"active_mb": round(mx.get_active_memory() / MB), "peak_mb": round(mx.get_peak_memory() / MB),
+            "cache_mb": round(mx.get_cache_memory() / MB)}
+
+
 def generate(text, p, seed):
+    """Returns (audio, stats): stats holds gen_s and the MLX memory of this take."""
+    t0 = time.time()
+    mx.reset_peak_memory()
     mx.random.seed(seed)
     ref = ref_array(p["ref_audio"])
     chunks = []
     for r in model.generate(text=text, ref_audio=ref, ref_text=p["ref_text"], lang_code=CFG.get("lang_code", "en"),
                             temperature=p["temperature"], top_k=int(p["top_k"]), top_p=p["top_p"],
-                            repetition_penalty=p["repetition_penalty"], max_tokens=int(p["max_tokens"]),
+                            repetition_penalty=p["repetition_penalty"], max_tokens=token_cap(text, p),
                             split_pattern=None, verbose=False):
         chunks.append(np.array(r.audio, dtype=np.float32))
+    stats = {"gen_s": round(time.time() - t0, 2), **mem_mb()}
     mx.clear_cache()
-    return np.concatenate(chunks) if chunks else np.zeros(1, np.float32)
+    return (np.concatenate(chunks) if chunks else np.zeros(1, np.float32)), stats
 
 
 def split_sentences(text, min_words=0):
@@ -166,33 +200,75 @@ def apply_level(x, level_db):
     return np.clip(x * min(g, 0.97 / max(1e-9, np.abs(x).max())), -1, 1)
 
 
-def evaluate(x, tmp, say, check=("tail", "rise", "wer")):
+def measure(x, check):
+    """The gates that need no Whisper: trim, tail, rise and energy. WER is filled in by hear()."""
     xt = gates.trim_end(x, SR)
     tail = gates.tail_db(xt, SR); rise = gates.ending_rise(xt, SR)
-    sf.write(tmp, xt, SR, subtype="PCM_16")
-    heard = whisper.text(tmp); w = wer(say, heard)
     g = CFG["gates"]
-    ok = {"tail": bool(tail <= g["tail_db_max"]), "rise": bool(rise <= g["rise_hz_max"]), "wer": bool(w < g["wer_max"])}
-    ok = {k: (v or k not in check) for k, v in ok.items()}   # gates not in `check` count as passed
-    return xt, {"tail_db": float(tail), "rise_hz": float(rise), "wer": float(w), "heard": heard,
-                "energy": energy_score(xt), "pass": ok, "all_pass": all(ok.values()), "sec": len(xt) / SR}
+    ok = {"tail": bool(tail <= g["tail_db_max"]) or "tail" not in check,   # gates not in `check` count as passed
+          "rise": bool(rise <= g["rise_hz_max"]) or "rise" not in check, "wer": None}
+    return xt, {"tail_db": float(tail), "rise_hz": float(rise), "wer": None, "heard": None, "asr": False,
+                "energy": energy_score(xt), "pass": ok, "all_pass": False, "sec": len(xt) / SR}
+
+
+def hear(xt, m, tmp, say, check):
+    """Run Whisper on a measured take and complete its gates."""
+    t0 = time.time()
+    sf.write(tmp, xt, SR, subtype="PCM_16")
+    m["heard"] = whisper.text(tmp); m["wer"] = float(wer(say, m["heard"]))
+    m["pass"]["wer"] = bool(m["wer"] < CFG["gates"]["wer_max"]) or "wer" not in check
+    m["all_pass"] = all(m["pass"].values()); m["asr"] = True; m["asr_s"] = round(time.time() - t0, 2)
+    return m
+
+
+def evaluate(x, tmp, say, check=("tail", "rise", "wer")):
+    xt, m = measure(x, check)
+    return xt, hear(xt, m, tmp, say, check)
+
+
+def score_key(m):
+    """The selection order of every take: all gates passed, then gates passed, then energy (or lowest WER)."""
+    return (m["all_pass"], sum(m["pass"].values()), m["energy"] if m["all_pass"] else -m["wer"])
 
 
 def take(text, say, p, seed0, attempts, select, tmp, check=("tail", "rise", "wer")):
     """Run attempts, return (audio, info, tries)."""
-    tries, best = [], None
+    takes = []   # (attempt, seed, trimmed audio, metrics)
     for k in range(1, attempts + 1):
         seed = seed0 + k
-        x = generate(text, p, seed)
-        xt, m = evaluate(x, tmp, say, check)
-        m.update(attempt=k, seed=seed)
-        tries.append({kk: vv for kk, vv in m.items() if kk != "heard"})
-        key = (m["all_pass"], sum(m["pass"].values()), m["energy"] if m["all_pass"] else -m["wer"])
-        if best is None or key > best[0]:
-            best = (key, xt, m)
-        if select == "first_pass" and m["all_pass"]:
-            break
-    return best[1], best[2], tries
+        x, stats = generate(text, p, seed)
+        xt, m = measure(x, check)
+        m.update(attempt=k, seed=seed, **stats)
+        takes.append((k, seed, xt, m))
+        if select == "first_pass":
+            hear(xt, m, tmp, say, check)
+            if m["all_pass"]:
+                break
+    if select != "first_pass" and CFG.get("lazy_asr", True):
+        # The winner is the highest-energy take that passes every gate. Hear the takes that already pass tail and
+        # rise in falling energy order; the first one that also passes WER is that winner.
+        ready = sorted((t for t in takes if t[3]["pass"]["tail"] and t[3]["pass"]["rise"]),
+                       key=lambda t: (-t[3]["energy"], t[0]))
+        winner = None
+        for t in ready:
+            if hear(t[2], t[3], tmp, say, check)["all_pass"]:
+                winner = t
+                break
+        if winner is None:   # no take passes: hear the rest and pick exactly as a full check does
+            for t in takes:
+                if not t[3]["asr"]:
+                    hear(t[2], t[3], tmp, say, check)
+    elif select != "first_pass":
+        for t in takes:
+            hear(t[2], t[3], tmp, say, check)
+    best = None
+    for k, seed, xt, m in takes:
+        if not m["asr"]:
+            continue   # not heard: it cannot beat the winner, which passed every gate
+        if best is None or score_key(m) > score_key(best[1]):
+            best = (xt, m)
+    tries = [{kk: vv for kk, vv in t[3].items() if kk != "heard"} for t in takes]
+    return best[0], best[1], tries
 
 
 def handle(req):
@@ -241,12 +317,31 @@ def emit(obj):
     OUT.write(json.dumps(obj, default=float) + "\n"); OUT.flush()
 
 
+_last_activity = time.time()
+_busy = threading.Event()
+
+
+def exit_when_idle(minutes):
+    """Free the model and Whisper when nobody sends work, for example after a caller died without quitting.
+    The watchdog thread touches no MLX state; it only ends the process between requests."""
+    while True:
+        time.sleep(30)
+        if not _busy.is_set() and time.time() - _last_activity > minutes * 60:
+            print(f"qwen_server: no request for {minutes} min, exiting", file=sys.stderr, flush=True)
+            os._exit(0)
+
+
 def main():
+    global _last_activity
+    idle = float(CFG.get("idle_exit_min", 10))
+    if idle > 0:
+        threading.Thread(target=exit_when_idle, args=(idle,), daemon=True).start()
     emit({"event": "ready", "model": CFG["model"], "config": args.config, "sr": SR})
     for line in sys.stdin:
         line = line.strip()
         if not line:
             continue
+        _busy.set()
         req = {}
         try:
             req = json.loads(line)
@@ -256,6 +351,8 @@ def main():
         except Exception as e:  # keep the process alive
             res = {"id": req.get("id"), "ok": False, "error": f"{type(e).__name__}: {e}"}
         emit(res)
+        _last_activity = time.time()
+        _busy.clear()
 
 
 if __name__ == "__main__":

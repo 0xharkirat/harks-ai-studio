@@ -52,6 +52,27 @@ Set `attempts` to 4 when you compare the voice with ElevenLabs.
 The times are one run each on an Apple M5, with the GPU free, and `check.dart` adds about 3 minutes (Whisper on the CPU).
 A second run of the same script takes 2 s, because every line is cached. Editing 1 line takes about 2.5 min, most of it loading the model and Whisper.
 
+## Memory and run time
+
+Since 2026-10-21 the helper does 4 things to use less memory and time. None of them changes which take a sentence keeps:
+
+- It caps MLX's cache of freed buffers at 512 MB (`mlx_cache_mb`). Without the cap the helper grew to 15 GB on the 6 test lines.
+- With `best_energy`, Whisper hears the takes that pass the tail and rise gates in falling energy order, and stops at the first one that passes WER (`lazy_asr`). That take is the one a full check keeps.
+- Each sentence gets `max_tokens` = 60 + 15 per word (`max_tokens_floor`, `max_tokens_per_word`), capped by `sampling.max_tokens`. Normal speech needs about 5 tokens a word, so only a take that runs on past its text stops early.
+- It exits after 10 minutes without a request (`idle_exit_min`; 0 = never), in case a caller dies without stopping it.
+
+The 6 test lines, 4 attempts, on an Apple M5:
+
+| | Before | After |
+|---|---|---|
+| Time | 352 s | 166 s |
+| Peak memory: helper / Whisper worker | 15.0 / 5.9 GB | 8.4 / 5.9 GB |
+| Whisper checks | 38 | 15 |
+| Kept takes and gate results | | identical, take by take |
+
+The settings above are defaults in `qwen_server.py`. Put a key in `qwen.json` only to change it: every edit to `qwen.json` makes `tts.dart` voice all cached lines again.
+Whisper on MLX was tested and rejected (research/2026-10-21-mlx-whisper-medium-en.md).
+
 ## Voice one line from any agent
 
 Any agent or shell can use the local voice without a video project.
