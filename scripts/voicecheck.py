@@ -26,7 +26,7 @@ def load(path):
     return librosa.load(str(path), sr=16000, mono=True)[0]
 
 def embed(y):
-    e = spk.encode_batch(torch.tensor(y).unsqueeze(0)).squeeze().numpy()
+    e = spk.encode_batch(torch.tensor(y).unsqueeze(0)).squeeze().detach().cpu().numpy()
     return e / np.linalg.norm(e)
 
 refs = {p.name: embed(load(p)) for p in sorted((STUDIO / 'assets/voice/reference').glob('*.mp3'))}
@@ -39,7 +39,7 @@ def score(path):
     chunks = [y[i:i + win] for i in range(0, len(y), win) if len(y[i:i + win]) > 2 * 16000] or [y]  # short scene: score it whole
     # The accent model scores by cosine; a softmax at scale 30 (its training margin) gives shares.
     scores = torch.stack([acc.classify_batch(torch.tensor(c).unsqueeze(0))[0].squeeze() for c in chunks])
-    probs = torch.softmax(scores * 30, -1).mean(0).numpy()
+    probs = torch.softmax(scores * 30, -1).mean(0).detach().cpu().numpy()
     f0, voiced, _ = librosa.pyin(y, fmin=65, fmax=320, sr=16000, frame_length=1024)
     f0 = f0[voiced & ~np.isnan(f0)]
     if f0.size == 0:  # silent or unvoiced clip: report it instead of crashing
