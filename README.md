@@ -18,6 +18,7 @@ The write-up with copy-paste prompts: [harksingh.com/posts/harks-ai-voice-clone]
 - [Local voice](#local-voice)
 - [Recorded voice](#recorded-voice)
 - [Subtitles](#subtitles)
+- [Shorts](#shorts)
 - [Puppet](#puppet)
 - [Components](#components)
 - [Assets](#assets)
@@ -303,6 +304,29 @@ The intro and outro lines that say "I'm {{ai_name}}" are about the AI voice. Rew
 - At least 0.8 s on screen, held 0.5 s after the speech ends.
 
 Add multi-word product names to `TERMS` in `captions.ts` so they stay on one line.
+
+## Shorts
+
+Make a vertical Short from 1 chapter (1 scene) of a finished video, or from a run of scenes. Run it from the video's `project` folder, after `layout.dart`:
+
+```sh
+dart ../../../scripts/short.dart what                                          # out/short-what.mp4
+dart ../../../scripts/short.dart what..help --hook "One session, or a company"   # 2 scenes
+dart ../../../scripts/short.dart what --no-render                              # prepare only
+```
+
+- 1080x1920, 60 s at most (a longer run stops the command and lists each scene's length).
+- Not a crop: `short-video/vertical/Short.tsx` draws the scenes from `scenes.tsx` again, whole, on a 1920x1080 stage scaled to the width of the frame.
+  The text inside a scene is small on a phone, so the captions carry the words.
+- The hook line is on screen from frame 1: `--hook`, else the scene's `"hook"` in `script.json`, else its first line.
+- Big captions, 1-4 words at a time, light each word as it is spoken. Word times come from `layout.json` (recorded voice), or from Whisper on the narration.
+- The voice is the scene audio the long video plays, set to -16 LUFS, with the quiet music bed and a whoosh on each cut.
+  When `tts.provider` is `recorded`, a scene that was not built from your recordings, or whose recording changed after the build, stops the command.
+- A black card (`"black"` in `script.json`) is cut, and the camera box and the long video's subtitles are left out.
+- It ends with the size, length, and loudness of the file. Look at 2 frames before you upload.
+
+`short.dart` copies `short-video/vertical/` to `src/short/` on every run; edit it in the studio, not in the video.
+`short-video/template` is a different thing: the 16:9 short done video that `new-video.sh --short` starts. The vertical Short uses its look: the same type and colours, and a whoosh on each cut.
 
 ## Puppet
 

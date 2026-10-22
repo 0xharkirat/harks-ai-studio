@@ -55,6 +55,7 @@ When `check.dart` flags a scene, respell the misread word in its line's `tts` an
 Done when `check.dart` prints `All scenes pass.` and `src/layout.json` exists.
 
 To narrate it with your own recordings instead, run `voice-mode.sh recorded` and `recorded.dart` in place of `tts.dart` (README "Recorded voice").
+`short.dart <scene>` then makes a vertical Short of 1 scene (README "Shorts").
 
 ## 5. Build the scenes
 

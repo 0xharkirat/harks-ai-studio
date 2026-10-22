@@ -168,3 +168,8 @@ Every render is a new version.
 
 Open the new version for the user and give them its path.
 The YouTube upload waits for "test pass" and uses the final only; [`UPLOAD.md`](UPLOAD.md) builds its title, description, and settings.
+
+## 9. Shorts (on request)
+
+`dart ../../../scripts/short.dart <scene>` (or `first..last`, `--hook "..."`) renders a vertical 1080x1920 Short, 60 s at most, of 1 chapter of a delivered video: hook line in frame 1, big captions, the same narration.
+README "Shorts" has the options. Check the printed size, length, and loudness, and look at 2 frames, as in step 7.
