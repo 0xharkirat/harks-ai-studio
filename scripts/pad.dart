@@ -3,6 +3,7 @@ import 'dart:io';
 
 // Stretch the pauses between sentences to match Hark's natural pace.
 // Cuts land in real silence found by silencedetect, not on alignment guesses.
+// A line's "words" (recorded.dart) move with the line; an extra of 0 keeps the pauses as they are.
 void main(List<String> args) {
   final extra = double.parse(args[0]);
   final t = jsonDecode(File('src/timings.raw.json').readAsStringSync()) as List;
@@ -31,8 +32,10 @@ void main(List<String> args) {
       filter += '[0:a]atrim=start=$prev${end == null ? '' : ':end=$end'},asetpts=PTS-STARTPTS[p$k];';
       parts.add('[p$k]');
       if (end != null) {
-        filter += 'anullsrc=r=44100:cl=mono,atrim=duration=$extra[s$k];';
-        parts.add('[s$k]');
+        if (extra > 0) {
+          filter += 'anullsrc=r=44100:cl=mono,atrim=duration=$extra[s$k];';
+          parts.add('[s$k]');
+        }
         prev = end;
       }
     }
@@ -42,6 +45,10 @@ void main(List<String> args) {
     for (var k = 0; k < lines.length; k++) {
       lines[k]['start'] += k * extra;
       lines[k]['end'] += k * extra;
+      for (final w in (lines[k]['words'] as List?) ?? const []) {
+        w['start'] += k * extra;
+        w['end'] += k * extra;
+      }
     }
     final p = Process.runSync('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', 'public/audio/$id.wav']);
     s['duration'] = double.parse((p.stdout as String).trim());

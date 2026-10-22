@@ -16,6 +16,7 @@ The write-up with copy-paste prompts: [harksingh.com/posts/harks-ai-voice-clone]
 - [Voice recipe](#voice-recipe)
 - [Draft and final](#draft-and-final)
 - [Local voice](#local-voice)
+- [Recorded voice](#recorded-voice)
 - [Subtitles](#subtitles)
 - [Puppet](#puppet)
 - [Components](#components)
@@ -225,6 +226,7 @@ zsh ../../../scripts/voice-mode.sh draft    # back to the free voice
 It does not touch the recipe (`voice_id`, `model_id`, `prefix`, `seed`), so FINAL uses what `new-video.sh` stored.
 A video whose config has no `tts` block is FINAL, which keeps the older videos working.
 After the switch, run `tts.dart`, `check.dart`, `pad.dart`, `layout.dart`, and render once.
+A third mode, RECORDED, voices the video with your own recordings and no made voice at all (see [Recorded voice](#recorded-voice)).
 
 ## Local voice
 
@@ -235,6 +237,7 @@ After the switch, run `tts.dart`, `check.dart`, `pad.dart`, `layout.dart`, and r
 | `qwen` | Qwen3-TTS clone of your voice, on the Mac (MLX). The draft voice. See [`local-voice/README.md`](local-voice/README.md) | Words, accent, and likeness all run |
 | `say` | macOS `say`: free, offline, a stock voice. The fallback when `qwen` is not set up, and the voice of `--explainer` videos | Words only: a stock voice is not a clone |
 | `elevenlabs` | Your ElevenLabs clone. The final voice | Words, accent, and likeness |
+| `recorded` | Your own recordings, cut into lines by `recorded.dart` (see [Recorded voice](#recorded-voice)) | Words only: it is your voice, so there is no clone to check |
 
 `tts.dart` voices each line on its own, so line times are exact, and keeps each voiced line in `.voice-cache/`, so a script edit re-voices only the lines that changed.
 It writes the same files as the ElevenLabs path, so `pad.dart` and `layout.dart` run unchanged.
@@ -244,6 +247,50 @@ It writes the same files as the ElevenLabs path, so `pad.dart` and `layout.dart`
 Another local model, such as Kokoro, is one more case in `localVoice` in `scripts/tts.dart`.
 
 The local voice is not as lively as ElevenLabs yet. `local-voice/README.md` holds the energy numbers and the round log.
+
+## Recorded voice
+
+Record the narration yourself, and the video has your real voice and no AI voice.
+`voice-mode.sh recorded` sets `tts.provider` to `recorded` for 1 video, and `voice-mode.sh draft` or `final` switches back, so the other voices keep working.
+To use your recordings for 1 run only, run `tts.dart --recorded`.
+
+Put the recordings in the video's `recordings/` folder (`tts.recorded.dir`). Any of wav, m4a, aiff, mp3, or flac works. Name them like this:
+
+| File | Holds |
+|---|---|
+| `take.wav` | 1 continuous take of the whole script |
+| `intro.wav` | every line of the scene `intro`, read in order with a short pause between lines |
+| `intro_2.wav` | line 2 of `intro` alone (lines count from 1, as in the reading sheet) |
+
+A line uses its own file first, then its scene's file, then the take. So 1 bad line costs 1 new recording, not a new take.
+A file with any other name is ignored, and the build says so.
+
+```sh
+zsh ../../../scripts/voice-mode.sh recorded
+dart ../../../scripts/recorded.dart --dry-run   # which file voices each line; changes nothing
+dart ../../../scripts/recorded.dart
+dart ../../../scripts/pad.dart 0.2              # 0 keeps the pauses recorded.dart made
+dart ../../../scripts/layout.dart
+```
+
+`recorded.dart` writes what `tts.dart` writes (`public/audio/<scene>.mp3`, `src/timings.raw.json`), so `pad.dart`, `layout.dart`, `check.dart`, and the render run unchanged. Per file, it:
+
+1. Sets the loudness to -16 LUFS, what `layout.dart` targets for the narration (the last render measured -16.4).
+2. Gets word times from the local Whisper (`tts.recorded.model`, `small.en` by default; `--model medium.en` is slower and more exact).
+3. Matches the heard words to the script, so a take or a scene file is cut into lines. A missing, repeated, or extra word stays local to where it happens.
+4. Cuts each line in the real silence around it, trims the leading and trailing silence, and keeps `tts.recorded.pad` (0.1 s) of clean silence each side.
+   Lines of a scene are joined with `tts.recorded.gap` (0.25 s).
+
+It prints what Whisper heard next to the script for every line that is not an exact match, as `retake.dart build` does.
+A line with no recording, or one that is far from the script (over 30% of its letters), stops the build and names the line, so nothing wrong reaches a render.
+`--force` builds anyway, and the subtitles then show the script, not what you said. If the script is what changed, edit `script.json`.
+
+Extra files: `public/audio/recorded/<scene>_<n>.wav` (1 clip per line), `src/recorded.json` (which file made which scene; `short.dart` checks it), and word times in `timings.raw.json`, which `layout.dart` copies into `layout.json`.
+With word times, the subtitles in `captions.ts` cut on the real words. An older video keeps its own `captions.ts`; copy the template one over it to get them.
+`--scenes intro..help` (or `intro,what`) builds only those scenes, for a test clip; run without it to build everything.
+
+In this mode the AI voice badge and the camera box's "AI VOICE" tag are gone, `check.dart` runs the words gate only, and `retake.dart` refuses.
+The intro and outro lines that say "I'm {{ai_name}}" are about the AI voice. Rewrite them, because it is you talking.
 
 ## Subtitles
 

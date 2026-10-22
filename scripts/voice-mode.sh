@@ -1,15 +1,16 @@
 #!/bin/zsh
-# Flip a video between DRAFT (the local voice, free) and FINAL (the ElevenLabs clone, billed).
-# Usage, from the video's project folder:  zsh ../../../scripts/voice-mode.sh draft|final|status
+# Flip a video between DRAFT (the local voice, free), FINAL (the ElevenLabs clone, billed) and RECORDED (your own recordings).
+# Usage, from the video's project folder:  zsh ../../../scripts/voice-mode.sh draft|final|recorded|status
 #   draft   tts.provider = qwen (say when the local voice is not set up; never ElevenLabs)
 #   final   tts.provider = elevenlabs, prints the credit estimate and "ElevenLabs is billed only from here on"
+#   recorded  tts.provider = recorded: the narration is your own recordings (scripts/recorded.dart), nothing is voiced or billed
 #   status  prints the active provider
 # This only edits src/config.json. It never calls ElevenLabs: the next `dart tts.dart` does, in final mode.
 # The recipe (voice_id, model_id, prefix, seed) is never touched, so final restores exactly what new-video.sh stored.
 set -e
 studio=${0:A:h:h}
 mode=$1
-[[ $mode == (draft|final|status) ]] || { echo "usage: voice-mode.sh draft|final|status (run from the video's project folder)"; exit 1; }
+[[ $mode == (draft|final|recorded|status) ]] || { echo "usage: voice-mode.sh draft|final|recorded|status (run from the video's project folder)"; exit 1; }
 [[ -f src/config.json && -f script.json ]] || { echo "voice-mode: run this from the video's project folder (no src/config.json here)"; exit 1; }
 why=''
 if [[ $mode == draft ]]; then
@@ -25,6 +26,8 @@ had = 'provider' in tts
 now = tts.get('provider', 'elevenlabs')
 
 def label(p):
+    if p == 'recorded':
+        return 'RECORDED (your own voice, from ' + tts.get('recorded', {}).get('dir', 'recordings') + '/)'
     return 'FINAL (elevenlabs)' if p == 'elevenlabs' else f"DRAFT ({p}{', attempts %s' % tts.get('qwen', {}).get('attempts', 'default') if p == 'qwen' else ''})"
 
 def save():
@@ -43,6 +46,12 @@ elif mode == 'draft':
         tts['provider'] = 'qwen'
     save()
     print('mode: ' + label(tts['provider']) + '. Voicing costs no ElevenLabs credits.')
+elif mode == 'recorded':
+    tts['recorded'] = {'dir': 'recordings', 'model': 'small.en', 'pad': 0.1, 'gap': 0.25, **tts.get('recorded', {})}
+    tts['provider'] = 'recorded'
+    save()
+    print('mode: ' + label('recorded') + '. Nothing is voiced or billed.')
+    print('Put the recordings in ' + tts['recorded']['dir'] + '/ (take.wav, <scene>.wav or <scene>_<n>.wav), then run `dart ../../../scripts/recorded.dart --dry-run`, then `dart ../../../scripts/recorded.dart`.')
 else:
     if str(config.get('voice_id', '')).startswith('PASTE') or not config.get('voice_id'):
         sys.exit('voice-mode: voice_id in src/config.json is a placeholder, so there is no ElevenLabs clone to switch to (README "Make it yours")')

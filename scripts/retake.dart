@@ -131,6 +131,11 @@ Future<void> build() async {
 
 Future<void> main(List<String> args) async {
   final provider = (recipe['tts'] as Map?)?['provider'] ?? 'elevenlabs';
+  if (provider == 'recorded') {
+    stderr.writeln('This video uses your own recordings, so there is nothing to re-voice.\n'
+        'Record the line or scene again (recordings/<scene>_<n>.wav, recordings/<scene>.wav), then run recorded.dart, pad.dart and layout.dart.');
+    exit(1);
+  }
   if (provider != 'elevenlabs') {
     // A local voice is free and gives the same take every time, so a full re-voice replaces a retake.
     stderr.writeln('retake.dart re-voices lines with ElevenLabs, but this video uses tts.provider "$provider".\n'

@@ -115,6 +115,21 @@ Then run `pad.dart 0.6` and `layout.dart` again, and render once.
 
 Done when `voice-mode.sh status` says `FINAL`, `check/bad.txt` is empty, and `src/layout.json` exists.
 
+When the speaker records the narration themselves, skip the AI voice: README "Recorded voice" has the file names.
+
+```sh
+zsh ../../../scripts/voice-mode.sh recorded
+dart ../../../scripts/recorded.dart --dry-run   # which recording voices each line
+dart ../../../scripts/recorded.dart             # loudness, Whisper word times, cut into lines, heard-versus-script check
+dart ../../../scripts/pad.dart 0.2
+dart ../../../scripts/layout.dart
+```
+
+A line with no recording, or one far from the script, stops `recorded.dart` and names the line.
+Rewrite the "I'm <ai_name>" lines first: there is no AI voice in this mode.
+
+Done when `recorded.dart` ends with `recorded voice:` and `src/layout.json` exists.
+
 ## 6. Build the scenes
 
 In `src/scenes.tsx`, export one component per scene id with a capital first letter (`demo` -> `Demo`).

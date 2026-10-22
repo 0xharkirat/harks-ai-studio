@@ -8,7 +8,7 @@ import 'dart:io';
 //   voice  - speaker likeness vs assets/voice/reference must stay over gate.min_match (skipped when null,
 //            and on a scene under 4 s, where ECAPA scores every voice low)
 // The accent and voice gates run whenever `gate` is configured, for ElevenLabs and a local clone (qwen) alike.
-// Only `say` skips them, because it is a stock voice, not a clone of Hark.
+// Only `say` skips them, because it is a stock voice, not a clone of Hark, and `recorded`, because it is Hark.
 // Failing scene ids go to check/bad.txt; `dart tts.dart reroll` redoes only those.
 //
 //   dart check.dart            # every scene
@@ -23,7 +23,7 @@ String configFile(String studio) => File('src/config.json').existsSync()
 final config = jsonDecode(File(configFile(studio)).readAsStringSync()) as Map;
 final provider = (config['tts'] as Map?)?['provider'] ?? 'elevenlabs';
 final clone = provider == 'elevenlabs';
-final gate = provider == 'say' ? const {} : (config['gate'] as Map?) ?? const {};
+final gate = provider == 'say' || provider == 'recorded' ? const {} : (config['gate'] as Map?) ?? const {};
 const minLikenessSeconds = 4;
 
 String norm(String s) => s
@@ -98,5 +98,7 @@ void main(List<String> args) {
       ? '\nAll scenes pass.'
       : clone
           ? '\nRe-roll with: dart ../../../scripts/tts.dart reroll'
-          : '\nA local voice reads the same way every time: respell the line in its tts field, then run tts.dart again.');
+          : provider == 'recorded'
+              ? '\nRecord the scene again, then run recorded.dart. A scene that differs on purpose means a change in script.json.'
+              : '\nA local voice reads the same way every time: respell the line in its tts field, then run tts.dart again.');
 }

@@ -5,8 +5,11 @@
 //   auxiliary from its verb, or a number from what it counts; never end a line on "to", "the", "and"...
 // - no cue of 1 or 2 words unless it is the whole line: a short tail joins the cue before it
 // - at least 0.8 s on screen, held 0.5 s after the speech ends when nothing follows
+// A line with "words" (word times from Whisper, written by recorded.dart) cuts its cues on the real word times;
+// without them, speech time is spread by characters.
 
-export type Line = {say: string; start: number; end: number};
+export type Word = {w: string; start: number; end: number};
+export type Line = {say: string; start: number; end: number; words?: Word[]};
 export type Cue = {lines: string[]; start: number; end: number};
 
 const LINE = 42;
@@ -112,6 +115,7 @@ export const toCues = (lines: Line[], fps: number): Cue[] => {
   const cues: Cue[] = [];
   lines.forEach((line, li) => {
     const words = line.say.split(/\s+/).filter(Boolean);
+    const timed = line.words && line.words.length === words.length ? line.words : null;
     const cost = gapCosts(words);
     const total = words.join(' ').length;
     const span = line.end - line.start;
@@ -119,9 +123,9 @@ export const toCues = (lines: Line[], fps: number): Cue[] => {
     const spans = splitCues(words, cost);
     spans.forEach(({span: [a, b], lines: shown}, k) => {
       // Speech time is spread by characters, which tracks spoken length better than word count.
-      const start = line.start + (span * length(words, 0, a)) / total + (a > 0 ? span / total : 0);
+      const start = timed ? timed[a].start : line.start + (span * length(words, 0, a)) / total + (a > 0 ? span / total : 0);
       const isLast = k === spans.length - 1;
-      const speechEnd = isLast ? line.end : line.start + (span * length(words, 0, b)) / total;
+      const speechEnd = isLast ? line.end : timed ? timed[b - 1].end : line.start + (span * length(words, 0, b)) / total;
       const end = isLast ? Math.min(speechEnd + Math.round(fps * 0.5), nextLineStart - 2) : speechEnd;
       cues.push({lines: shown, start: Math.round(start), end: Math.round(Math.max(end, start + fps * 0.8))});
     });

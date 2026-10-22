@@ -7,11 +7,13 @@ import 'dart:io';
 //   elevenlabs - the cloned voice, with the locked recipe described below
 //   say        - macOS `say`, free and offline, set by tts.say (voice, rate)
 //   qwen       - local Qwen3-TTS clone through one long-lived helper, set by tts.qwen (python, server, config, attempts)
+//   recorded   - no voice is made: your own recordings are cut into lines by recorded.dart, which this runs
 // Every provider writes the same two outputs, so pad.dart and layout.dart run unchanged after it.
 //
 //   dart tts.dart            # every scene
 //   dart tts.dart reroll     # elevenlabs only: chunks holding a scene listed in check/bad.txt, each with its next seed
 //   dart tts.dart --dry-run  # elevenlabs only: print each request it would send and the character total; calls nothing
+//   dart tts.dart --recorded # use your recordings for this run, whatever tts.provider says (extra flags go to recorded.dart)
 //
 // ElevenLabs: scenes are merged into chunks of up to `chunk_chars` characters, because short requests drift more.
 // Each chunk is stitched to the ones before it with previous_request_ids (v4 request stitching), so
@@ -68,6 +70,7 @@ Future<void> main(List<String> args) async {
   }
   final tts = (recipe['tts'] as Map?) ?? const {};
   final provider = (tts['provider'] ?? 'elevenlabs') as String;
+  if (provider == 'recorded' || args.contains('--recorded')) return recorded(args);
   if (provider == 'elevenlabs') return elevenlabs(scenes, args);
   if (args.contains('--dry-run')) {
     print('dry run: tts.provider is "$provider", a local voice; it calls ElevenLabs never and spends no credits');
@@ -87,6 +90,12 @@ Future<void> main(List<String> args) async {
       await stop(); // a helper process (qwen) holds its model in memory until told to stop
     }
   }
+}
+
+/// Your own recordings in place of a made voice: recorded.dart writes the same files tts.dart does.
+Future<void> recorded(List<String> args) async {
+  final p = await Process.start('dart', ['$studio/scripts/recorded.dart', ...args.where((a) => a != '--recorded')], mode: ProcessStartMode.inheritStdio);
+  exit(await p.exitCode);
 }
 
 /// Writes one line of speech to a WAV file.

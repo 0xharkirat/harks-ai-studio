@@ -28,6 +28,12 @@
       "server": "local-voice/qwen_server.py",
       "config": "local-voice/qwen.json",
       "attempts": 2
+    },
+    "recorded": {
+      "dir": "recordings",
+      "model": "small.en",
+      "pad": 0.1,
+      "gap": 0.25
     }
   },
   "gate": {
@@ -46,7 +52,7 @@
     "prefix": "Optional audio tag sent before every request, like \"[Indian English accent] \", if your clone drifts toward another accent.",
     "voice_settings": "eleven_v4 only honours stability and similarity_boost.",
     "chunk_chars": "Scenes are merged into requests up to this size; very short requests drift more.",
-    "tts": "provider picks the narrator: elevenlabs (your clone, the FINAL voice), qwen (the local clone, the free DRAFT voice) or say (macOS say, free and offline). Keep elevenlabs here: scripts/new-video.sh starts every new video in draft by setting qwen in that video's own copy, and scripts/voice-mode.sh flips it to final. --explainer videos use say. say.voice is a name from `say -v '?'`; rate is words a minute, and null keeps the voice's own pace. qwen paths are relative to the studio; attempts is takes per sentence (2 is the draft default, 4 is full quality; see local-voice/README.md).",
+    "tts": "provider picks the narrator: elevenlabs (your clone, the FINAL voice), qwen (the local clone, the free DRAFT voice) or say (macOS say, free and offline). Keep elevenlabs here: scripts/new-video.sh starts every new video in draft by setting qwen in that video's own copy, and scripts/voice-mode.sh flips it to final. --explainer videos use say. say.voice is a name from `say -v '?'`; rate is words a minute, and null keeps the voice's own pace. qwen paths are relative to the studio; attempts is takes per sentence (2 is the draft default, 4 is full quality; see local-voice/README.md). recorded means your own recordings, made into lines by scripts/recorded.dart (README Recorded voice): dir is the folder in the project, model the Whisper model that times the words, pad the silence kept around each line, gap the silence between lines. Set it per video with voice-mode.sh recorded.",
     "gate": "Optional checks per scene: max_us fails a scene above this US-accent share (0-1), min_match fails it below this likeness to the clips in assets/voice/reference. null skips the check.",
     "voice_sources": "Optional path to a sources.json listing the public videos your voice clips come from; scripts/fetch-voice.sh rebuilds the clips from it.",
     "youtube": "Used by UPLOAD.md on \"test pass\": channel is the YouTube channel you upload done videos to, category its YouTube category."

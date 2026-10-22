@@ -38,7 +38,16 @@ Future<void> main() async {
       'audioFrom': ((cursor + lead) * fps).round(),
       'lines': [
         for (final l in s['lines'])
-          {'say': l['say'], 'start': ((cursor + lead + l['start']) * fps).round(), 'end': ((cursor + lead + l['end']) * fps).round()}
+          {
+            'say': l['say'],
+            'start': ((cursor + lead + l['start']) * fps).round(),
+            'end': ((cursor + lead + l['end']) * fps).round(),
+            // Word times exist when recorded.dart made the narration; captions.ts and short.dart use them.
+            if (l['words'] != null)
+              'words': [
+                for (final w in l['words']) {'w': w['w'], 'start': ((cursor + lead + w['start']) * fps).round(), 'end': ((cursor + lead + w['end']) * fps).round()}
+              ],
+          }
       ],
     });
     inputs.addAll(['-i', 'public/${s['audio']}']);

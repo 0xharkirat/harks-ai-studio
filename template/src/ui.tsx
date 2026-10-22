@@ -376,9 +376,11 @@ const NamedBox: React.FC = () => {
           ))}
         </div>
       </div>
-      <div style={{position: 'absolute', top: 10, left: 10, background: c.red, color: 'white', fontFamily: ssw, fontWeight: 800, fontSize: 15, letterSpacing: 1.5, padding: '5px 10px'}}>
-        AI VOICE
-      </div>
+      {provider !== 'recorded' && (
+        <div style={{position: 'absolute', top: 10, left: 10, background: c.red, color: 'white', fontFamily: ssw, fontWeight: 800, fontSize: 15, letterSpacing: 1.5, padding: '5px 10px'}}>
+          AI VOICE
+        </div>
+      )}
     </div>
   );
 };
@@ -487,13 +489,14 @@ export const PermissionPicker: React.FC<{rows: PermRow[]; at: number; every?: nu
 /** Frame where line i starts; falls back to the last line so short scenes never get NaN timings. */
 export const at = (cue: number[], i: number) => cue[Math.min(i, cue.length - 1)] ?? 0;
 
-/** Top-right disclosure pill. Keep it on every intro and outro. */
+/** Top-right disclosure pill. Keep it on every intro and outro, unless the narration is the speaker's own recording. */
 // The disclosure names the voice that made this render: the local draft clone or the ElevenLabs final.
-// A missing provider means ElevenLabs, as in voice-mode.sh.
+// A missing provider means ElevenLabs, as in voice-mode.sh. Recorded narration is not an AI voice, so it has no pill.
 const provider = (config as {tts?: {provider?: string}}).tts?.provider ?? 'elevenlabs';
 const voiceMaker = provider === 'elevenlabs' ? 'ElevenLabs' : provider === 'say' ? 'macOS say' : 'a local voice clone';
 export const AiBadge: React.FC<{at: number; text?: string}> = ({at: from, text = `AI voice · made with Claude Code + ${voiceMaker}`}) => {
   const p = useIn(from);
+  if (provider === 'recorded') return null;
   return (
     <div
       style={{
