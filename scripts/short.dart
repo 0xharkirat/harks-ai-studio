@@ -10,9 +10,13 @@ import 'recording.dart';
 //   dart short.dart what                                  # the scene "what", out/short-what.mp4
 //   dart short.dart what..help --hook "Claude Code is 1 session. Paperclip adds the company."
 //   dart short.dart what --out ~/Desktop/short.mp4 --no-render   # only prepare src/short/; render by hand
+//   dart short.dart what --theme B                        # a channel video (new-video.sh --channel): the same Short in theme B
 //
-// The scenes are not a crop of the 16:9 render: scenes.tsx is drawn again by short-video/vertical/Short.tsx on a
+// A done video's scenes are not a crop of the 16:9 render: scenes.tsx is drawn again by short-video/vertical/Short.tsx on a
 // 1920x1080 stage scaled to the width of the frame, under a hook line, above big word-by-word captions.
+// A channel video (it has src/lib, the scene library) renders natively instead: short-video/native/NativeShort.tsx draws the
+// same scene components at 1080x1920, where they reflow to their 9:16 layouts, so no text is shrunk. The theme comes from
+// script.json (layout.json), or --theme.
 // The narration is the scene audio the long video plays (public/audio/<scene>.wav), mixed again and set to -16 LUFS.
 // When tts.provider is "recorded", a scene that was not built from your recordings stops the Short.
 // Word times come from the layout (recorded.dart writes them); a video with a made voice gets them from Whisper.
@@ -75,7 +79,7 @@ String labelOf(Map? scene, String id) => (scene?['chapter'] as String?) ?? (id.i
 
 Future<void> run(List<String> args) async {
   final positional = <String>[];
-  String? hookArg, outArg, modelArg;
+  String? hookArg, outArg, modelArg, themeArg;
   var render = true;
   var i = 0;
   String value() => i + 1 < args.length ? args[++i] : fail('${args[i]} needs a value');
@@ -87,6 +91,8 @@ Future<void> run(List<String> args) async {
         outArg = value();
       case '--model':
         modelArg = value();
+      case '--theme':
+        themeArg = value();
       case '--no-render':
         render = false;
       default:
@@ -94,13 +100,16 @@ Future<void> run(List<String> args) async {
     }
   }
   if (positional.length != 1) {
-    stderr.writeln('usage: dart short.dart <scene | first..last> [--hook "text"] [--out file.mp4] [--model small.en] [--no-render]\n(run from the video\'s project folder)');
+    stderr.writeln('usage: dart short.dart <scene | first..last> [--hook "text"] [--out file.mp4] [--model small.en] [--theme A|B|C|D] [--no-render]\n(run from the video\'s project folder)');
     exit(2);
   }
   for (final f in ['src/layout.json', 'script.json', 'src/scenes.tsx', 'src/ui.tsx']) {
     if (!File(f).existsSync()) fail('$f is missing: run this from the video\'s project folder, after tts.dart or recorded.dart, pad.dart and layout.dart');
   }
   final layout = jsonDecode(File('src/layout.json').readAsStringSync()) as Map;
+  // A channel video has the scene library: its Short is laid out natively for 9:16 (see the header).
+  final native = File('src/lib/index.ts').existsSync();
+  if (themeArg != null && !native) fail('--theme is for a channel video (new-video.sh --channel); this video has no scene library in src/lib');
   final fps = layout['fps'] as int;
   final all = layout['scenes'] as List;
   final script = {for (final s in jsonDecode(File('script.json').readAsStringSync()) as List) s['id'] as String: s as Map};
@@ -212,19 +221,25 @@ Future<void> run(List<String> args) async {
   final label = ids.length == 1 ? labelOf(script[ids.first], ids.first) : '${labelOf(script[ids.first], ids.first)} - ${labelOf(script[ids.last], ids.last)}';
 
   Directory('src/short').createSync(recursive: true);
-  for (final f in Directory('$studio/short-video/vertical').listSync().whereType<File>()) {
-    f.copySync('src/short/${f.path.split('/').last}');
+  // The native Short reuses vertical/Short.tsx for its caption paging, then replaces the composition root.
+  for (final dir in ['vertical', if (native) 'native']) {
+    for (final f in Directory('$studio/short-video/$dir').listSync().whereType<File>()) {
+      f.copySync('src/short/${f.path.split('/').last}');
+    }
   }
+  final theme = themeArg ?? layout['theme'] as String?;
   File('src/short/short.json').writeAsStringSync(const JsonEncoder.withIndent('  ').convert({
     'fps': fps,
     'totalFrames': total,
     'hook': hook,
     'label': label,
     'audio': 'short/$key.wav',
+    if (native && theme != null) 'theme': theme,
     'scenes': scenes,
     'words': words,
   }));
   print('short $key: ${ids.length} scene(s), ${duration.toStringAsFixed(1)} s of $maxSeconds, narration ${level.before.toStringAsFixed(1)} -> ${level.after.toStringAsFixed(1)} LUFS (${provider == 'recorded' ? 'your recordings, checked against src/recorded.json' : 'a made voice, "$provider"'})');
+  print(native ? 'layout: native 1080x1920, the library\'s 9:16 layouts, theme ${theme ?? 'A'}' : 'layout: the 16:9 scenes on a stage scaled to the frame width (a done video)');
   print('hook (${hookArg != null ? '--hook' : script[ids.first]?['hook'] != null ? 'script.json' : 'the first line, pass --hook to change it'}): $hook');
   print('captions: ${words.length} words from $wordsFrom');
 
@@ -235,7 +250,7 @@ Future<void> run(List<String> args) async {
   }
   if (!Directory('node_modules').existsSync()) fail('no node_modules here: run zsh $studio/scripts/install-deps.sh');
   Directory(File(out).parent.path).createSync(recursive: true);
-  final p = await Process.start('pnpm', ['exec', 'remotion', 'render', 'src/short/index.ts', 'Short', out], mode: ProcessStartMode.inheritStdio);
+  final p = await Process.start('pnpm', ['exec', 'remotion', 'render', 'src/short/index.ts', 'Short', out, if (themeArg != null) '--props=${jsonEncode({'theme': themeArg})}'], mode: ProcessStartMode.inheritStdio);
   final code = await p.exitCode;
   if (code != 0) exit(code);
 

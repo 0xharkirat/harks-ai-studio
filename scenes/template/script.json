@@ -1,0 +1,22 @@
+[
+  {
+    "id": "intro",
+    "theme": "A",
+    "lines": [
+      {
+        "say": "TODO: the question, and the one computed number that answers it."
+      },
+      {
+        "say": "TODO: where that number comes from, in one sentence."
+      }
+    ]
+  },
+  {
+    "id": "outro",
+    "lines": [
+      {
+        "say": "TODO: the answer, as one sentence."
+      }
+    ]
+  }
+]

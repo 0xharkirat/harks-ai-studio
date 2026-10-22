@@ -1,0 +1,15 @@
+{
+  "title": 70,
+  "number": 110,
+  "map": 280,
+  "map-closest": 328,
+  "map-early": 75,
+  "map-mid": 185,
+  "globe": 290,
+  "label": 60,
+  "orbit": 180,
+  "chart-bar": 100,
+  "chart-scatter": 110,
+  "guide": 20,
+  "guide-slot": 150
+}

@@ -19,6 +19,7 @@ The write-up with copy-paste prompts: [harksingh.com/posts/harks-ai-voice-clone]
 - [Recorded voice](#recorded-voice)
 - [Subtitles](#subtitles)
 - [Shorts](#shorts)
+- [Scene library](#scene-library)
 - [Puppet](#puppet)
 - [Components](#components)
 - [Assets](#assets)
@@ -318,6 +319,7 @@ dart ../../../scripts/short.dart what --no-render                              #
 - 1080x1920, 60 s at most (a longer run stops the command and lists each scene's length).
 - Not a crop: `short-video/vertical/Short.tsx` draws the scenes from `scenes.tsx` again, whole, on a 1920x1080 stage scaled to the width of the frame.
   The text inside a scene is small on a phone, so the captions carry the words.
+  A channel video (`new-video.sh --channel`, see [Scene library](#scene-library)) renders natively instead: `short-video/native/NativeShort.tsx` draws the library's scenes at 1080x1920, in their 9:16 layouts, so no text is shrunk.
 - The hook line is on screen from frame 1: `--hook`, else the scene's `"hook"` in `script.json`, else its first line.
 - Big captions, 1-4 words at a time, light each word as it is spoken. Word times come from `layout.json` (recorded voice), or from Whisper on the narration.
 - The voice is the scene audio the long video plays, set to -16 LUFS, with the quiet music bed and a whoosh on each cut.
@@ -327,6 +329,22 @@ dart ../../../scripts/short.dart what --no-render                              #
 
 `short.dart` copies `short-video/vertical/` to `src/short/` on every run; edit it in the studio, not in the video.
 `short-video/template` is a different thing: the 16:9 short done video that `new-video.sh --short` starts. The vertical Short uses its look: the same type and colours, and a whoosh on each cut.
+
+## Scene library
+
+`scenes/` is the For Curious Beings design system: 1 library of Remotion scenes (title card, number reveal, world map, globe, label with a leader line, orbit diagram, chart, the guide character, the channel mark), a theme switch (A clean data, B sketch with the guide, C clean data with the guide, D flat stub), and native layouts for 16:9 and 9:16.
+`scenes/README.md` is the reference.
+
+```sh
+scripts/new-video.sh --channel 12-sail-line                      # a faceless video that uses the library
+dart ../../../scripts/render.dart --theme B                      # 1 flag picks the theme, 1920x1080
+dart ../../../scripts/render.dart --theme B --tall               # the same video laid out natively for 1080x1920
+dart ../../../scripts/short.dart beat --theme B                  # a Short: the 9:16 layouts, not a shrunk 16:9 stage
+```
+
+`script.json` can name the theme (`"theme": "B"` on the first scene); `layout.dart` copies it to `layout.json`, and a render flag overrides it.
+The channel look is a theme switch, not a rebuild, so the style test (`channel/style_test.md` in the factory repo) can rotate styles with 1 flag.
+`examples/beach-beat/` is the 14-second demo in all 3 complete themes.
 
 ## Puppet
 

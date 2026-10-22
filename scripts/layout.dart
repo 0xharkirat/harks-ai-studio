@@ -16,6 +16,18 @@ Future<void> main() async {
   // "black": seconds of black screen before a scene, "card": text shown on it (such as "Before" or "After"),
   // and "reveal": the sfx key (ui.tsx) that plays as the scene appears.
   final black = {for (final e in script.entries) e.key: (e.value['black'] as num?)?.toDouble() ?? 0.0};
+  // "theme": "A" | "B" | "C" | "D" (or a name such as "sketch") names the look of a channel video (scenes/README.md).
+  // 1 theme per video: the first scene that names one sets it, and a different one later is ignored with a warning.
+  String? theme;
+  for (final s in t) {
+    final named = script[s['id']]?['theme'] as String?;
+    if (named == null) continue;
+    if (theme == null) {
+      theme = named;
+    } else if (named != theme) {
+      stderr.writeln('layout: scene "${s['id']}" names theme "$named", but the video uses "$theme" (1 theme per video), so it is ignored');
+    }
+  }
   var cursor = 0.0;
   final scenes = [];
   final filter = StringBuffer();
@@ -60,8 +72,8 @@ Future<void> main() async {
   final r = Process.runSync('ffmpeg', ['-v', 'error', '-y', ...inputs, '-filter_complex', filter.toString(), '-map', '[out]', '-ar', '48000', '-ac', '1', 'public/narration.wav']);
   if (r.exitCode != 0) throw r.stderr;
   final totalFrames = scenes.fold<int>(0, (a, s) => a + (s['frames'] as int));
-  File('src/layout.json').writeAsStringSync(const JsonEncoder.withIndent('  ').convert({'fps': fps, 'totalFrames': totalFrames, 'scenes': scenes}));
-  print('total ${cursor.toStringAsFixed(1)}s, $totalFrames frames');
+  File('src/layout.json').writeAsStringSync(const JsonEncoder.withIndent('  ').convert({'fps': fps, 'totalFrames': totalFrames, if (theme != null) 'theme': theme, 'scenes': scenes}));
+  print('total ${cursor.toStringAsFixed(1)}s, $totalFrames frames${theme != null ? ', theme $theme' : ''}');
   // A puppet in the camera box (new-video.sh builds src/puppet.json from speaker.puppet) needs mouth timing.
   final puppet = File('src/puppet.json');
   if (puppet.existsSync() && (jsonDecode(puppet.readAsStringSync()) as Map).containsKey('canvas')) {

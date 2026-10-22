@@ -1,0 +1,13 @@
+[
+  {
+    "id": "beat",
+    "theme": "A",
+    "hook": "How far can you go before you hit land?",
+    "lines": [
+      {"say": "Pick a beach."},
+      {"say": "Point your boat at the horizon."},
+      {"say": "Now sail in a perfectly straight line."},
+      {"say": "How far can you go before you hit land?"}
+    ]
+  }
+]
