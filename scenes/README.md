@@ -193,7 +193,7 @@ Ideas from MIT projects are credited in the files that use them: lemo-opuscar (c
 ## Known gaps
 
 - Theme D is a stub: the palette, font and plate colour only. No flat drawings.
-- The channel mark is a placeholder until the logo is in `brand/export/`.
+- The channel mark comes from `~/youtube-factory/brand/export/channel-mark.png` (the light Little Being, picked 22 Oct 2026). `new-video.sh --channel` copies it into each video project.
 - `WorldMap` and `GlobeRoute` draw a route that starts at a point; a map with several routes or a region fill is not built.
 - The globe has no closest-approach callout. `OrbitDiagram` draws a hyperbola from perigee and approach speed, not a full n-body path.
 - Country names on the map come from Natural Earth, in English only. Disputed borders show as Natural Earth draws them.
