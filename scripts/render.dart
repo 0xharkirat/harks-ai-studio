@@ -7,7 +7,7 @@ import 'dart:io';
 //   dart ../../../scripts/render.dart --theme B                 # out/video-B.mp4, 1920x1080
 //   dart ../../../scripts/render.dart --theme C --tall          # out/video-C-tall.mp4, 1080x1920, every scene laid out for 9:16
 //   dart ../../../scripts/render.dart --theme A --still 120     # one frame, out/still-A-120.png
-//   flags: --out file, --no-music, --no-captions, --frames 0-89
+//   flags: --out file, --no-music, --no-captions, --frames 0-89, --concurrency 2 (Remotion's frame workers; the default is half the cores)
 //
 // The theme is a render flag, not a code change: it is passed to Remotion as the input prop `theme`, and the library's
 // ThemeRoot reads it. Without --theme the video uses the theme named in script.json (layout.json), else "A".
@@ -19,7 +19,7 @@ Never fail(String message) {
 
 Future<void> main(List<String> args) async {
   String? theme, out, frames;
-  int? still;
+  int? still, concurrency;
   var tall = false, music = true, captions = true;
   for (var i = 0; i < args.length; i++) {
     String value() => i + 1 < args.length ? args[++i] : fail('${args[i]} needs a value');
@@ -38,8 +38,10 @@ Future<void> main(List<String> args) async {
         frames = value();
       case '--still':
         still = int.tryParse(value()) ?? fail('--still needs a frame number');
+      case '--concurrency':
+        concurrency = int.tryParse(value()) ?? fail('--concurrency needs a number');
       default:
-        stderr.writeln('usage: dart render.dart [--theme A|B|C|D] [--tall] [--out file] [--still N] [--frames a-b] [--no-music] [--no-captions]');
+        stderr.writeln('usage: dart render.dart [--theme A|B|C|D] [--tall] [--out file] [--still N] [--frames a-b] [--concurrency N] [--no-music] [--no-captions]');
         exit(2);
     }
   }
@@ -57,6 +59,7 @@ Future<void> main(List<String> args) async {
     '--props=${jsonEncode(props)}',
     if (isStill) '--frame=$still',
     if (!isStill && frames != null) '--frames=$frames',
+    if (!isStill && concurrency != null) '--concurrency=$concurrency',
   ];
   final t0 = DateTime.now();
   final p = await Process.start('pnpm', cmd, mode: ProcessStartMode.inheritStdio);

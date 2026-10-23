@@ -1,0 +1,27 @@
+[
+  {
+    "id": "intro",
+    "theme": "A",
+    "placeholder": "PLACEHOLDER narration. Written from research/01-brightest-night/facts.md, not Hark's voice note. Internal test beat, never published.",
+    "lines": [
+      {"say": "Singapore gives off at least 56 times more light than the average land on Earth."}
+    ]
+  },
+  {
+    "id": "night",
+    "hold": 1.2,
+    "placeholder": "PLACEHOLDER narration. Written from research/01-brightest-night/facts.md, not Hark's voice note. Internal test beat, never published.",
+    "lines": [
+      {"say": "We ranked 190 countries by their light at night."},
+      {"say": "Singapore comes first. Every square kilometre of it is lit."},
+      {"say": "On the Korean border, the south is 12 times brighter than the north."}
+    ]
+  },
+  {
+    "id": "ranking",
+    "placeholder": "PLACEHOLDER narration. Written from research/01-brightest-night/facts.md, not Hark's voice note. Internal test beat, never published.",
+    "lines": [
+      {"say": "These are the ten brightest countries, per square kilometre."}
+    ]
+  }
+]

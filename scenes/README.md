@@ -10,6 +10,7 @@ One script renders in any style with one flag, because a theme is a set of token
 - [Layout: reflow, not shrink](#layout-reflow-not-shrink)
 - [Type scale](#type-scale)
 - [Scenes](#scenes)
+- [Night map](#night-map)
 - [Channel mark](#channel-mark)
 - [Gallery and checks](#gallery-and-checks)
 - [Licences and packages](#licences-and-packages)
@@ -23,8 +24,10 @@ One script renders in any style with one flag, because a theme is a set of token
 | `src/core/` | Tokens and mechanics: `theme.ts`, `type.ts`, `layout.tsx`, `paper.tsx` (surface, boil, grain), `ink.tsx` (rough.js), `ui.tsx` (text, plate, leader line), `marks.tsx`, `measure.ts`, `motion.ts`, `fonts.ts` |
 | `src/scenes/` | The scenes and overlays (see [Scenes](#scenes)) |
 | `src/geo/geo.ts` | Natural Earth land and borders, great circles, the flat projection |
+| `tools/` | Scripts that make the inputs of a scene. `night-levels.py` makes the raster levels `NightMap` reads |
 | `template/` | Files laid over the done-video template by `new-video.sh --channel`: `package.json` and lock file, `Root.tsx`, `Video.tsx`, `scenes.tsx`, `script.json` |
 | `examples/beach-beat/` | The 14-second demo beat as `script.json` and `scenes.tsx` |
+| `examples/night-beat/` | The 22-second test beat of video 1 (a number, the night map, a top 10 chart), with the script that makes its data |
 | `gallery/` | A contact sheet of every scene in every theme, for checks |
 
 ## Start a video
@@ -64,7 +67,7 @@ dart ../../../scripts/render.dart --theme B --tall      # out/video-B-tall.mp4, 
 dart ../../../scripts/render.dart --theme C --still 330 # one frame, for a check
 ```
 
-Flags: `--out file`, `--no-music`, `--no-captions`, `--frames a-b`.
+Flags: `--out file`, `--no-music`, `--no-captions`, `--frames a-b`, `--concurrency N` (Remotion's frame workers: use 2 on a shared machine).
 `--tall` renders the `VideoTall` composition: every scene reads the 1080x1920 frame and lays out for it. It is not the 16:9 picture scaled down.
 
 A Short comes from `short.dart`, as for any video (`README.md`, Shorts).
@@ -91,7 +94,7 @@ Tokens, in `src/core/theme.ts`:
 
 | Token | Meaning |
 |---|---|
-| `palette` | Background, text, ink, accent, plate colours, map and globe colours, marker colours, chart colours, categorical series |
+| `palette` | Background, text, ink, accent, plate colours, map and globe colours, marker colours, chart colours, categorical series, and `night` (the night map: sea, land, coast, border, label, and the `ramp` of light colours from dim to hot, whose luminance must rise) |
 | `line` | `boil` (redraw 12 times a second), `roughness`, `weight`, `wobble` (px of displacement in the boil filter) |
 | `paper` | `kind` (`none` or `ruled`), grain, fibres, vignette |
 | `fonts` | Display, body, number, serif; `boost` (hand fonts are multiplied up, never down); `caps` for tags |
@@ -143,17 +146,43 @@ Overlays (`Headline`, `GuideSlot`, `ChannelMark`, `LeaderLabel`) go on top of a 
 | Scene | Props that matter | Notes |
 |---|---|---|
 | `TitleCard` | `title`, `kicker`, `subtitle`, `at` | 16:9 left-aligned, 9:16 centred. The title takes the largest role that fits 3 lines |
-| `NumberReveal` | `value`, `unit`, `label`, `source` (required), `at`, `countFrames` | Channel rule 7: the first 10 seconds show 1 computed number with its source. The number counts up in fixed digit cells |
+| `NumberReveal` | `value`, `unit`, `label`, `source` (required), `at`, `countFrames` | Channel rule 7: the first 10 seconds show 1 computed number with its source. The number counts up in fixed digit cells. A long `source` wraps under the number |
 | `WorldMap` | `route` (from and bearing, or from and to), `start`, `t` (timeline), `ticks`, `closest`, `vehicle`, `endMark` | Great-circle route, distance counter, tick labels, closest-approach callout (the camera moves in on it) |
 | `GlobeRoute` | as `WorldMap`, without `closest` | Orthographic globe, a true great circle clipped at the limb |
+| `NightMap` | `levels`, `camera` (keys of `{at, box, move, fit}`), `floor`, `names`, `hideNames`, `latRange`, `lightsIn`, `end` | The night raster on a flat map, with a camera that moves between lon/lat boxes. See [Night map](#night-map) |
 | `LeaderLabel` | `at`, `lines`, `dir`, `show` | A label with a leader line. `placeLabel()` gives the geometry for a scene that draws its own SVG |
 | `OrbitDiagram` | `orbits` (`altitudeKm`, `periodH`, `count`), `flyby` (`closestKm`, `vInfKmS`), `title`, `hoursPerSecond` | To scale: Earth, rings at their real distance from the centre, satellites at their real relative speeds, a hyperbolic flyby path |
-| `Chart` | `kind: 'bar'` with `data`; `kind: 'scatter'` with `points`, `xLabel`, `yLabel`; `title`, `source` | Horizontal bars keep every label at the minimum size or above; a long label moves above its bar in 9:16 |
+| `Chart` | `kind: 'bar'` with `data`; `kind: 'scatter'` with `points`, `xLabel`, `yLabel`; `title`, `source` | Horizontal bars keep every label at the minimum size or above; a long label moves above its bar. A list too long for 16:9 reflows into 2 columns (read down the left, then down the right: put the rank in the label). 10 bars fit 16:9 only with no `title` and a source of 2 lines. A long `source` wraps |
 | `Guide`, `GuideSlot` | `moments: [{at, emotion}]`, `turns` | 7 emotions: happy, excited, determined, look, wonder, confused, proud. 1 emotion per moment, with a squint before a change and a hop after |
 | `ChannelMark` | `show` | See below |
 | `Headline` | `text`, `at` | The line the narration asks or claims, in the layout's headline zone |
 
 The map and globe timeline is `{pin, aim, boat, routeStart, routeEnd, question, focus, end}`; `examples/beach-beat/scenes.tsx` derives it from the line cues.
+
+## Night map
+
+`NightMap` shows the NASA night raster of the factory (`research/01-brightest-night/brightness_5120x2560.png`: 8 bit, log encoded, equirectangular) and moves a camera between regions.
+
+```sh
+uv run scenes/tools/night-levels.py ~/youtube-factory/research/01-brightest-night/brightness_5120x2560.png videos/NN-name/project/public/night
+```
+
+```tsx
+const keys: NightKey[] = [
+  {at: 0, box: [-180, -58, 180, 84], fit: 'content'},   // the world
+  {at: 134, box: [102.6, 0.3, 105.0, 2.7], move: 52},    // Singapore, arrived at frame 134 after a 52 frame move
+];
+const cam = useNightCamera(keys, frames);                  // cam.project([lon, lat], frame) gives a pixel, for a LeaderLabel
+<NightMap levels={[staticFile('night/night-L0.png'), staticFile('night/night-L1.png'), staticFile('night/night-L2.png')]} camera={keys} end={frames} />
+```
+
+- **Projection.** The raster is equirectangular, so the map is too: the lights are a crop and scale of the image, and the coast and borders use the same linear mapping, so they cannot drift apart. The horizontal scale is `rho` times the vertical one. `rho` is 1 in a world view and cos(lat of the box) in a close view, so Korea is not stretched sideways. The Natural Earth projection of `WorldMap` is not used here.
+- **Floor.** A value below `floor` (default 1.0 nW/(cm2 sr), the research's "lit" cut) is never drawn: its opacity is 0, and the colour at the floor is the dimmest ramp colour, so the cut has no edge. The factory raster has a faint 0.3 to 1.0 plateau with straight tile edges over deserts, India and the Arctic, and square holes near 75 to 80 N. All of it is below 1.0.
+- **Colour.** The value goes through a 256 entry table made from `palette.night.ramp` after the image is scaled, so colours never blend. Brighter is always lighter (the scene warns when a ramp breaks that).
+- **Levels.** `levels` are the raster at full size, half and quarter, finest first. A coarser level is the maximum of each block, so a small lit place survives a world view. Between 2 levels the scene blends them. A level is for display only: no number is read from it.
+- **Camera.** A key is a lon/lat `box`, the frame `at` which the camera has arrived, and `move` frames of travel (default 2.2 s). The path is the van Wijk smooth zoom, and a hold pushes in 4.5 % until the next move. `fit` is `main` (the default, clear of the HUD) or `content`.
+- **Latitudes.** The map draws between `latRange` (default 60 S to 84 N). The raster has no Antarctica.
+- **Check.** A still-only composition (`NightCheck` in the example video) renders a box against a known place; Singapore, the Nile, the Korean border, the Arctic and India were checked that way.
 
 ## Channel mark
 
@@ -198,5 +227,7 @@ Ideas from MIT projects are credited in the files that use them: lemo-opuscar (c
 - The globe has no closest-approach callout. `OrbitDiagram` draws a hyperbola from perigee and approach speed, not a full n-body path.
 - Country names on the map come from Natural Earth, in English only. Disputed borders show as Natural Earth draws them.
 - In a native Short the hook line sits on the map with a heavy outline and no plate, so it can cross country names. The captions band below the visual is clear.
+- `NightMap` is flat and equirectangular. It has no globe, and the Arctic is stretched in a view of the whole top of the world. One raster pixel is 7.8 km, so a city-state is a few pixels: the lights of a close view are soft blobs, not streets. The gallery has no `NightMap`, because it needs the raster.
+- A `NightMap` label that follows a moving camera must fade out before the move starts: `useNightCamera().project` gives the pixel of the frame, so a label drawn in a move slides over the map.
 - The tick label of a route can sit under the vehicle badge for a moment while the boat passes it.
 - The sketch theme renders in the same time as theme A (about 50 s for the 13.6 s demo), but its files are 4 to 5 times bigger: 40 MB against 8 MB at 16:9, because paper grain does not compress.
