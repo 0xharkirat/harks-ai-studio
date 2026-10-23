@@ -6,7 +6,7 @@ import {Sk, Wash, useInkBoil} from '../core/ink';
 import {useTheme} from '../core/ThemeContext';
 import {useLayout} from '../core/layout';
 import {Txt} from '../core/ui';
-import {measureNumber} from '../core/measure';
+import {balanceText, measureNumber} from '../core/measure';
 
 /**
  * The number reveal. Channel rule 7: the first 10 seconds show 1 computed number with its source.
@@ -50,8 +50,19 @@ export const NumberReveal: React.FC<{
     if (numW + unitW <= c.w * (hand ? 0.84 : 0.96)) break;
   }
   const numSize = L.type.size(role);
-  const labelFit = L.type.fit(label, [L.tall ? 'body' : 'heading', 'label'], c.w, 2, 'display');
   const tagSize = L.type.size('tag');
+  // The source wraps inside the content width (a long source line used to run off the frame). Its label leads the first line.
+  const srcLabel = hand ? 'source:' : 'Source:';
+  const srcLines = balanceText(`${srcLabel} ${source}`, L.type.spec('tag', 'body'), c.w * 0.96);
+  const srcLineH = tagSize * 1.25;
+  const srcH = srcLines.length * srcLineH;
+  const srcGap = 56 * u;
+  const labelGap = (hand ? 64 : 28) * u; // the sketch theme circles the number, and the ring needs room above it
+  // the label above the number takes the largest size that leaves room for the whole stack
+  const numH = numSize * 1.04;
+  let labelFit = L.type.fit(label, [L.tall ? 'body' : 'heading', 'label'], c.w, 2, 'display');
+  const stackFor = (lf: typeof labelFit) => lf.lines.length * lf.size * 1.12 + labelGap + numH + srcGap + srcH;
+  if (stackFor(labelFit) > c.h) labelFit = L.type.fit(label, ['label'], c.w, 3, 'display');
 
   const t0 = at + 6;
   const progress = easeOut(win(f, t0, t0 + countFrames));
@@ -63,14 +74,12 @@ export const NumberReveal: React.FC<{
   const rule = easeInOut(win(f, lockAt, lockAt + 0.5 * fps));
 
   const labelH = labelFit.lines.length * labelFit.size * 1.12;
-  const numH = numSize * 1.04;
-  const stackH = labelH + 28 * u + numH;
-  const top = c.y + (c.h - stackH - 140 * u) / 2;
-  const numTop = top + labelH + 28 * u;
+  const stackH = stackFor(labelFit);
+  const top = c.y + Math.max(0, (c.h - stackH) / 2);
+  const numTop = top + labelH + labelGap;
   const rowW = numW + unitW;
   const rowX = c.x + (c.w - rowW) / 2;
-  const srcLabel = hand ? 'source:' : 'Source';
-  const srcY = c.y + c.h - tagSize * 1.3 * (L.tall ? 2 : 1) - 4 * u;
+  const srcY = numTop + numH + srcGap;
 
   return (
     <AbsoluteFill>
@@ -106,15 +115,19 @@ export const NumberReveal: React.FC<{
             </div>
           )}
         </div>
-        <div style={{position: 'absolute', left: c.x, width: c.w, top: srcY, textAlign: 'center', opacity: clamp01(srcIn * 1.4), transform: `translateY(${(1 - srcIn) * 16 * u}px)`}}>
-          <div style={{display: 'inline-flex', flexDirection: L.tall ? 'column' : 'row', alignItems: 'center', gap: 16 * u}}>
-            <Txt role="tag" color={hand ? P.accent : P.accent} caps={!hand} tracking={hand ? 0 : 0.14} halo={hand}>
-              {srcLabel}
-            </Txt>
-            <Txt role="tag" color={P.textMuted} caps={false} halo={hand}>
-              {source}
-            </Txt>
-          </div>
+        <div style={{position: 'absolute', left: c.x, width: c.w, top: srcY, opacity: clamp01(srcIn * 1.4), transform: `translateY(${(1 - srcIn) * 16 * u}px)`}}>
+          {srcLines.map((ln, i) => (
+            <div key={i} style={{display: 'flex', justifyContent: 'center', gap: 0.3 * tagSize}}>
+              {i === 0 && (
+                <Txt role="tag" color={P.accent} caps={false} halo={hand}>
+                  {srcLabel}
+                </Txt>
+              )}
+              <Txt role="tag" color={P.textMuted} caps={false} halo={hand}>
+                {i === 0 ? ln.slice(srcLabel.length + 1) : ln}
+              </Txt>
+            </div>
+          ))}
         </div>
       </Boil>
     </AbsoluteFill>

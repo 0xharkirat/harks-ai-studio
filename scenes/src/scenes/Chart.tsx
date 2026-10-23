@@ -6,7 +6,7 @@ import {Sk, Wash, useInkBoil} from '../core/ink';
 import {useTheme} from '../core/ThemeContext';
 import {useLayout, type Rect} from '../core/layout';
 import {Plate, LeaderLine, Txt, type PlateLine} from '../core/ui';
-import {measureText} from '../core/measure';
+import {balanceText, measureText} from '../core/measure';
 import {placeLabel} from './LeaderLabel';
 
 /*
@@ -56,7 +56,9 @@ export const Chart: React.FC<ChartProps> = (props) => {
   // title on top, source at the bottom, the chart between
   const titleFit = props.title ? L.type.fit(props.title, L.tall ? ['heading', 'body', 'label'] : ['heading', 'body'], c.w, 2, 'display') : null;
   const titleH = titleFit ? titleFit.lines.length * titleFit.size * 1.1 + 28 * u : 0;
-  const srcH = props.source ? tagSize * 1.5 + 12 * u : 0;
+  // the source wraps inside the content width; a long source line used to run off the frame
+  const srcLines = props.source ? balanceText((hand ? 'source: ' : 'Source: ') + props.source, L.type.spec('tag', 'body'), c.w) : [];
+  const srcH = srcLines.length ? srcLines.length * tagSize * 1.25 + 12 * u : 0;
   const area: Rect = {x: c.x, y: c.y + titleH, w: c.w, h: c.h - titleH - srcH};
   const titleIn = theme.ease.enter(win(f, at, at + 18));
   const srcIn = theme.ease.enter(win(f, at + 30, at + 50));
@@ -66,28 +68,45 @@ export const Chart: React.FC<ChartProps> = (props) => {
 
   if (props.kind === 'bar') {
     const {data, unit, decimals = 0} = props;
-    const maxRows = Math.floor(area.h / (tagSize * (L.tall ? 1.9 : 1.6)));
-    const rows = data.length > maxRows ? data.slice(0, maxRows) : data;
-    if (data.length > maxRows) console.warn(`Chart: ${data.length} bars do not fit in ${L.tall ? '9:16' : '16:9'} at the minimum text size; showing the first ${maxRows}.`);
+    // Rows that fit at the minimum text size. A 16:9 frame holds about 5 stacked rows, so a longer list reflows into 2
+    // columns, read down the left and then down the right (put the rank in the label). 9:16 is tall enough for one.
+    const fits = (mul: number) => Math.floor(area.h / (tagSize * mul));
+    const cols = !L.tall && data.length > fits(1.6) ? 2 : 1;
+    const maxRows = fits(1.62); // the tightest row pitch that keeps a stacked label clear of the bar above it
+    const perCol = Math.min(Math.ceil(data.length / cols), maxRows);
+    const shown = Math.min(data.length, maxRows * cols);
+    if (data.length > shown) console.warn(`Chart: ${data.length} bars do not fit in ${L.tall ? '9:16' : '16:9'} at the minimum text size; showing the first ${shown}.`);
+    const rowsAll = data.slice(0, shown);
+    const gapCol = 48 * u;
+    const colW = (area.w - gapCol * (cols - 1)) / cols;
     const spec = L.type.spec('tag', 'body');
-    const labelW = Math.max(...rows.map((r) => measureText(r.label, spec)));
-    const stacked = labelW > area.w * 0.4;
+    const labelW = Math.max(...rowsAll.map((r) => measureText(r.label, spec)));
+    const stacked = labelW > colW * 0.4;
     const valSpec = L.type.spec('tag', 'display');
-    const valW = Math.max(...rows.map((r) => measureText(`${fmtNum(r.value, decimals)}${unit ? ' ' + unit : ''}`, valSpec))) + 16 * u;
+    const valW = Math.max(...rowsAll.map((r) => measureText(`${fmtNum(r.value, decimals)}${unit ? ' ' + unit : ''}`, valSpec))) + 16 * u;
     const gutter = stacked ? 0 : labelW + 24 * u;
-    const barX = area.x + gutter + 8 * u;
-    const barMax = area.w - gutter - valW - 8 * u;
-    const rowH = area.h / rows.length;
-    const barH = Math.min(rowH * (stacked ? 0.4 : 0.58), 90 * u);
-    const vmax = Math.max(...rows.map((r) => r.value));
+    const labelX = stacked ? 22 * u : 0; // a stacked label starts to the right of the axis, so the axis line never runs through its first character
+    const barMax = colW - gutter - valW - 8 * u;
+    const rowH = area.h / Math.min(perCol, rowsAll.length);
+    const barH = Math.min(rowH * (stacked ? 0.32 : 0.58), 90 * u);
+    const vmax = Math.max(...rowsAll.map((r) => r.value));
+    const cell = (i: number) => {
+      const col = Math.floor(i / perCol);
+      const row = i % perCol;
+      const x0 = area.x + col * (colW + gapCol);
+      const a0 = at + 10 + i * 7;
+      const k = easeOut(win(f, a0, a0 + 24));
+      const cy = area.y + rowH * row + rowH / 2;
+      return {x0, barX: x0 + gutter + 8 * u, cy, k};
+    };
     body = (
       <svg width={L.W} height={L.H} style={{position: 'absolute', left: 0, top: 0}}>
-        <Sk id="axis" boil={b} stroke={P.chart.axis} shape={{k: 'line', a: [barX, area.y], b: [barX, area.y + area.h]}} sw={4 * u} draw={win(f, at, at + 14)} rg={hand ? 1.2 : 0.2} />
-        {rows.map((r, i) => {
-          const a0 = at + 10 + i * 7;
-          const k = easeOut(win(f, a0, a0 + 24));
-          const cy = area.y + rowH * i + rowH / 2;
-          const top = stacked ? cy + tagSize * 0.35 - barH / 2 : cy - barH / 2;
+        {Array.from({length: cols}, (_, c) => (
+          <Sk key={`axis${c}`} id={`axis${c}`} boil={b} stroke={P.chart.axis} shape={{k: 'line', a: [area.x + c * (colW + gapCol) + gutter + 8 * u, area.y], b: [area.x + c * (colW + gapCol) + gutter + 8 * u, area.y + area.h]}} sw={4 * u} draw={win(f, at, at + 14)} rg={hand ? 1.2 : 0.2} />
+        ))}
+        {rowsAll.map((r, i) => {
+          const {barX, cy, k} = cell(i);
+          const top = stacked ? cy + tagSize * 0.3 - barH / 2 : cy - barH / 2;
           const w = Math.max(2, (r.value / vmax) * barMax * k);
           const col = r.highlight ? P.chart.bar : P.chart.barDim;
           return hand ? (
@@ -101,20 +120,18 @@ export const Chart: React.FC<ChartProps> = (props) => {
         })}
       </svg>
     );
-    plates = rows.map((r, i) => {
-      const a0 = at + 10 + i * 7;
-      const k = easeOut(win(f, a0, a0 + 24));
-      const cy = area.y + rowH * i + rowH / 2;
+    plates = rowsAll.map((r, i) => {
+      const {x0, barX, cy, k} = cell(i);
       const w = Math.max(2, (r.value / vmax) * barMax * k);
       const valueText = `${fmtNum(r.value * k, decimals)}${unit ? ' ' + unit : ''}`;
       return (
         <React.Fragment key={i}>
-          <div style={{position: 'absolute', left: area.x, top: stacked ? cy - barH / 2 - tagSize * 1.1 : cy - tagSize * 0.6, opacity: clamp01(k * 3), width: stacked ? area.w : labelW + 16 * u}}>
+          <div style={{position: 'absolute', left: x0 + labelX, top: stacked ? cy - barH / 2 - tagSize * 1.0 : cy - tagSize * 0.6, opacity: clamp01(k * 3), width: stacked ? colW - labelX : labelW + 16 * u}}>
             <Txt role="tag" color={r.highlight ? P.text : P.textMuted} caps={false} halo={hand} align={stacked ? 'left' : 'right'} style={{fontWeight: r.highlight ? theme.fonts.bodyWeight : undefined}}>
               {r.label}
             </Txt>
           </div>
-          <div style={{position: 'absolute', left: barX + w + 14 * u, top: stacked ? cy + tagSize * 0.35 - tagSize * 0.6 : cy - tagSize * 0.6, opacity: clamp01(k * 3)}}>
+          <div style={{position: 'absolute', left: barX + w + 14 * u, top: stacked ? cy + tagSize * 0.3 - tagSize * 0.6 : cy - tagSize * 0.6, opacity: clamp01(k * 3)}}>
             <Txt role="tag" kind="display" color={r.highlight ? P.accent : P.text} halo={hand}>
               {valueText}
             </Txt>
@@ -215,11 +232,13 @@ export const Chart: React.FC<ChartProps> = (props) => {
         )}
         {body}
         {plates}
-        {props.source && (
-          <div style={{position: 'absolute', left: c.x, width: c.w, top: c.y + c.h - tagSize * 1.5, opacity: clamp01(srcIn * 1.4), textAlign: L.tall ? 'center' : 'left'}}>
-            <Txt role="tag" color={P.textMuted} caps={false} halo={hand} align={L.tall ? 'center' : 'left'}>
-              {(hand ? 'source: ' : 'Source: ') + props.source}
-            </Txt>
+        {srcLines.length > 0 && (
+          <div style={{position: 'absolute', left: c.x, width: c.w, top: c.y + c.h - srcH + 12 * u, opacity: clamp01(srcIn * 1.4)}}>
+            {srcLines.map((ln, i) => (
+              <Txt key={i} role="tag" color={P.textMuted} caps={false} halo={hand} align={L.tall ? 'center' : 'left'} style={{lineHeight: 1.25}}>
+                {ln}
+              </Txt>
+            ))}
           </div>
         )}
       </Boil>
