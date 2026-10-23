@@ -35,6 +35,11 @@ export interface Palette {
   globe: {space0: string; space1: string; space2: string; sea0: string; sea1: string; sea2: string; land0: string; land1: string; land2: string; coast: string; grid: string; rim: string; halo: string};
   mark: {yellow: string; red: string; blue: string; green: string; orange: string; skin: string};
   chart: {bar: string; barDim: string; axis: string; grid: string};
+  /**
+   * The night map (NightMap). `ramp` runs from the dimmest light that shows to the brightest, at least 3 stops of
+   * 6-digit hex, and its luminance must rise along it, so a brighter place is never a darker colour.
+   */
+  night: {sea: string; land: string; coast: string; border: string; label: string; ramp: string[]};
 }
 
 export interface Theme {
@@ -89,6 +94,7 @@ const A: Palette = {
   globe: {space0: '#0d1f3d', space1: '#060f22', space2: '#02050e', sea0: '#3a93cf', sea1: '#1c5f99', sea2: '#081f3d', land0: '#e0e9b0', land1: '#b3c685', land2: '#6f8860', coast: '#7c9163', grid: 'rgba(190,225,255,0.14)', rim: '#8fd3ff', halo: '#6cc0ff'},
   mark: {yellow: '#f4d345', red: '#ff5a4f', blue: '#58c4dd', green: '#4cc36b', orange: '#ff7a21', skin: '#f2c9a3'},
   chart: {bar: '#ff7a21', barDim: '#3c6a85', axis: '#9cc7de', grid: 'rgba(156,199,222,0.18)'},
+  night: {sea: '#04101a', land: '#0d1f2d', coast: 'rgba(120,170,200,0.55)', border: 'rgba(156,199,222,0.42)', label: '#8fb2c6', ramp: ['#7a2e06', '#e0650f', '#ffa63d', '#ffe0a0', '#ffffff']},
 };
 
 const B: Palette = {
@@ -112,6 +118,7 @@ const B: Palette = {
   globe: {space0: '#fbf6e8', space1: '#fbf6e8', space2: '#efe6cc', sea0: 'rgba(96,190,240,0.55)', sea1: 'rgba(96,190,240,0.55)', sea2: 'rgba(96,190,240,0.55)', land0: 'rgba(255,206,92,0.7)', land1: 'rgba(255,206,92,0.7)', land2: 'rgba(255,206,92,0.7)', coast: '#242730', grid: 'rgba(47,111,208,0.3)', rim: '#242730', halo: 'transparent'},
   mark: {yellow: '#ffd93d', red: '#e2453c', blue: '#2f6fd0', green: '#3ea26a', orange: '#f08a24', skin: '#f6c9a0'},
   chart: {bar: '#e2453c', barDim: '#2f6fd0', axis: '#242730', grid: 'rgba(47,111,208,0.25)'},
+  night: {sea: '#171f3d', land: '#232d57', coast: 'rgba(251,246,232,0.8)', border: 'rgba(251,246,232,0.5)', label: '#e9e2cc', ramp: ['#a2341f', '#e2453c', '#f08a24', '#ffd93d', '#fff6d6']},
 };
 
 // Theme D (flat) is a stub: bold flat colours and one rounded font. Scenes use the clean structure with these tokens.

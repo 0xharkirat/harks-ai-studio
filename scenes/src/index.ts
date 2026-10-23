@@ -14,6 +14,7 @@ export {TitleCard} from './scenes/TitleCard';
 export {NumberReveal} from './scenes/NumberReveal';
 export {WorldMap, type WorldMapProps, type MapTimeline, type ClosestApproach} from './scenes/WorldMap';
 export {GlobeRoute} from './scenes/GlobeRoute';
+export {NightMap, useNightCamera, makeNightTable, type NightMapProps, type NightKey, type NightBox, type NightCamera} from './scenes/NightMap';
 export {LeaderLabel, placeLabel} from './scenes/LeaderLabel';
 export {OrbitDiagram, R_EARTH_KM, type OrbitSpec, type FlybySpec} from './scenes/OrbitDiagram';
 export {Chart, type ChartProps, type BarDatum, type ScatterPoint} from './scenes/Chart';
