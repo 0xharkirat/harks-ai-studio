@@ -163,7 +163,7 @@ String prompt(String text) {
     return all.isEmpty ? -120 : all.last; // the last match is the Overall block
   }
 
-  return (seconds: seconds(file), peak: last('Peak level dB'), floor: last('RMS trough dB'));
+  return (seconds: seconds(file), peak: last('Peak level dB'), floor: last('RMS (?:trough|through) dB'));
 }
 
 // ---- Inputs ----
