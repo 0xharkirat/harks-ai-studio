@@ -24,6 +24,9 @@ const rawDir = 'recordings/raw';
 
 /// Level checks on a finished take, in dBFS.
 const tooHot = -1.0; // a peak above this has probably clipped
+/// More samples than this exactly at the peak: the receiver clipped or limited them. The DJI Mic Mini stops at
+/// -2 dBFS, so its clipping never reaches [tooHot]; a clean take has 1 or 2 samples at its peak.
+const flatTop = 8;
 const tooQuiet = -24.0; // a peak below this wastes the mic's range
 const noisyRoom = -55.0; // the quietest 50 ms above this: a fan, traffic, or a noisy receiver gain
 
@@ -117,6 +120,10 @@ bool check(String file) {
   if (s.peak > tooHot) {
     print('TOO LOUD: it probably clipped. Turn the gain dial on the receiver down 1 step, then redo it.');
     ok = false;
+  } else if (s.atPeak > flatTop) {
+    print('TOO LOUD: ${s.atPeak} samples sit exactly at the peak, so the receiver clipped them. Turn the gain dial down 1 step, '
+        'hold the mic a little to the side of your mouth, then redo it.');
+    ok = false;
   } else if (s.peak < tooQuiet) {
     print('Quiet: turn the gain dial on the receiver up 1 step for the next take.');
   }
@@ -156,14 +163,14 @@ String prompt(String text) {
   return (stdin.readLineSync() ?? 'q').trim().toLowerCase();
 }
 
-({double seconds, double peak, double floor}) levels(String file) {
+({double seconds, double peak, double floor, int atPeak}) levels(String file) {
   final r = Process.runSync('ffmpeg', ['-hide_banner', '-nostats', '-i', file, '-af', 'astats=metadata=0:length=0.05', '-f', 'null', '-']);
   double last(String key) {
     final all = RegExp('$key: (-?[0-9.inf]+)').allMatches(r.stderr as String).map((m) => double.tryParse(m[1]!) ?? -120).toList();
     return all.isEmpty ? -120 : all.last; // the last match is the Overall block
   }
 
-  return (seconds: seconds(file), peak: last('Peak level dB'), floor: last('RMS (?:trough|through) dB'));
+  return (seconds: seconds(file), peak: last('Peak level dB'), floor: last('RMS (?:trough|through) dB'), atPeak: last('Abs Peak count').round());
 }
 
 // ---- Inputs ----

@@ -48,15 +48,16 @@ const defaults = <String, Object>{
   'highpass': 70, // Hz
   'speechLufs': -20, // the speech is raised or lowered to this before the denoise, the expander, and the compressor
   'denoise': 10, // dB that the denoise takes off the room
-  'expanderAbove': 15, // dB above the room (after the denoise) where the expander starts to lower the sound
-  'expanderRange': 12, // dB: the most the expander lowers the room
+  'expanderBelow': 12, // dB under speechLufs where the expander starts: breaths and rustle between phrases sit below it
+  'expanderRatio': 6, // tested on Hark's first takes: breaths stay as soft as in the raw take, and word ends keep their level
+  'expanderRange': 30, // dB: the most the expander lowers the sound between phrases
   'eqCap': 6, // dB: the most the fit boosts or cuts 1 band
   'eq': <String, double>{},
   'eqTrim': <String, double>{},
   'deesser': 0.4, // 0 to 1
   'compressorThreshold': -26, // dBFS, at speechLufs
   'compressorRatio': 3,
-  'limiter': -2, // dBFS: below the -1.5 dB true peak that recorded.dart and layout.dart allow
+  'limiter': -2.5, // dBFS sample peak: the true peak lands up to about 1 dB higher, under the -1.5 dB that recorded.dart allows
 };
 
 Future<void> main(List<String> args) async {
@@ -189,7 +190,9 @@ String chain(Map<String, dynamic> s, String pick, ({double lufs, double floor, d
   double n(String key) => (s[key] as num).toDouble();
   final gain = n('speechLufs') - m.lufs;
   final room = m.floor + gain;
-  final open = math.min(room - n('denoise') + n('expanderAbove'), -50.0); // never as high as quiet speech
+  // Set from the speech, not the room: a close mic makes breaths and rustle much louder than the room, and the
+  // compressor and the presence boost lift them again, so they must go down before those.
+  final open = n('speechLufs') - n('expanderBelow');
   final eq = bandGains(s);
   return [
     pick,
@@ -200,7 +203,7 @@ String chain(Map<String, dynamic> s, String pick, ({double lufs, double floor, d
     'apad=pad_len=1200',
     'afftdn=nr=${n('denoise')}:nf=${room.clamp(-80.0, -20.0).toStringAsFixed(1)}:tn=1',
     'atrim=start_sample=1200,asetpts=PTS-STARTPTS',
-    'agate=threshold=${lin(open)}:ratio=2:range=${lin(-n('expanderRange'))}:attack=5:release=200',
+    'agate=threshold=${lin(open)}:ratio=${n('expanderRatio')}:range=${lin(-n('expanderRange'))}:attack=5:release=200',
     // The EQ delays the sound by its 0.05 s and adds twice that at the end; the trim puts every word back in place.
     "firequalizer=gain_entry='${[for (final b in bands) 'entry($b,${eq[b]!.toStringAsFixed(2)})'].join(';')}':delay=0.05",
     'atrim=start=0.05:duration=${length.toStringAsFixed(6)},asetpts=PTS-STARTPTS',
@@ -217,6 +220,8 @@ Map<int, double> bandGains(Map<String, dynamic> s) {
 
 /// Fits the EQ so that the clean [takes] together match the shape of [reference]. Each round cleans them, measures
 /// the curve, and moves each band by what is left, up to 6 rounds or until no free band is off by 0.5 dB.
+/// Both curves are smoothed first: each voice has a peak at its own pitch (Kit near 100 Hz, Hark near 160 Hz), and
+/// fitting band by band would boost one band and cut the next to move that peak, which sounds boomy and boxy.
 /// The loudness is set after the EQ, so only the shape counts: each move is centred on its median, which spends
 /// the [eqCap] dB a band may move where the shapes differ. A band at the cap is not free.
 Map<String, dynamic> fit(List<String> takes, Map<String, dynamic> s) {
@@ -228,7 +233,8 @@ Map<String, dynamic> fit(List<String> takes, Map<String, dynamic> s) {
   for (var round = 1; round <= 6; round++) {
     final trial = {...s, 'eq': {for (final b in bands) '$b': eq[b]}};
     final curve = toneCurve([for (final (i, t) in takes.indexed) cleanTake(t, trial, out: '${tmp.path}/$i.wav', quiet: true)]);
-    final miss = {for (final b in fitted) b: reference[b]! - curve[b]!};
+    final want = smooth(reference), got = smooth(curve);
+    final miss = {for (final b in fitted) b: want[b]! - got[b]!};
     final centre = median(miss.values);
     final worst = [for (final b in fitted) if (eq[b]!.abs() < cap) (miss[b]! - centre).abs()].fold(0.0, math.max);
     print('  round $round: the worst free band is off by ${worst.toStringAsFixed(1)} dB');
@@ -241,6 +247,12 @@ Map<String, dynamic> fit(List<String> takes, Map<String, dynamic> s) {
   print('EQ: ${[for (final b in bands) '$b Hz ${eq[b]!.toStringAsFixed(1)}'].join(', ')}');
   return {...s, 'eq': {for (final b in bands) '$b': double.parse(eq[b]!.toStringAsFixed(1))}};
 }
+
+/// Each band averaged with its 2 neighbours (1:2:1), so a curve shows the tone and not the pitch of 1 voice.
+Map<int, double> smooth(Map<int, double> c) => {
+      for (final (i, b) in bands.indexed)
+        b: (2 * c[b]! + c[bands[math.max(i - 1, 0)]]! + c[bands[math.min(i + 1, bands.length - 1)]]!) / 4,
+    };
 
 double median(Iterable<double> values) {
   final v = values.toList()..sort();
