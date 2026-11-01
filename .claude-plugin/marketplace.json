@@ -1,0 +1,17 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "harks-ai-studio",
+  "description": "Narrated SSW done videos in your own voice clone, rendered with Remotion.",
+  "owner": {
+    "name": "Harkirat Singh",
+    "url": "https://github.com/0xharkirat"
+  },
+  "plugins": [
+    {
+      "name": "harks-ai-studio",
+      "description": "Make a narrated SSW done video: a free local draft voice for every edit, then your ElevenLabs clone for the final.",
+      "source": "./",
+      "category": "productivity"
+    }
+  ]
+}

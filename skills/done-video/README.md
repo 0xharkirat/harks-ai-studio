@@ -1,0 +1,392 @@
+# Done video studio
+
+The reference for the `done-video` skill.
+This folder is the studio: the scripts, the template, the assets, and, once you make videos, `videos/`.
+The [repo README](../../README.md) covers what the plugin does, how to install it, the 2 voice tiers, and the requirements.
+Every command below runs from the studio (`zsh scripts/studio.sh` prints where it is).
+
+- [What it does](#what-it-does)
+- [Install](#install)
+- [Make it yours](#make-it-yours)
+- [Usage](#usage)
+- [Edit a finished video](#edit-a-finished-video)
+- [Reinstall an old video](#reinstall-an-old-video)
+- [API key permissions](#api-key-permissions)
+- [Voice recipe](#voice-recipe)
+- [Draft and final](#draft-and-final)
+- [Local voice](#local-voice)
+- [Recorded voice](#recorded-voice)
+- [Subtitles](#subtitles)
+- [Shorts](#shorts)
+- [Scene library](#scene-library)
+- [Puppet](#puppet)
+- [Components](#components)
+- [Assets](#assets)
+- [Pronunciation](#pronunciation)
+- [Gotchas](#gotchas)
+- [License](#license)
+
+## What it does
+
+You say "make a done video for <PBI link>".
+The skill reads the PR, issue, and commits, writes a script in the [SSW done video](https://www.ssw.com.au/rules/done-video) order (intro, overview, pain, demo, outro), and voices it with your clone: first a free local draft for the rough edits, then the ElevenLabs clone once the draft is right.
+It checks every scene for accent drift and likeness, then renders a 1080p video with real screenshots, cursor clicks, SSW TV lower thirds, rule-based subtitles, typing and click sounds, and a quiet music bed.
+The narrator always introduces itself as your AI, so nobody mistakes the clone for you.
+
+## Install
+
+The [repo README](../../README.md#install) installs the plugin, the tools, and your ElevenLabs key.
+The parts below are optional, and each one runs once from the studio.
+
+The accent and likeness checks (the `gate` in your config) need a venv:
+
+```sh
+uv venv -p 3.11 .venv && VIRTUAL_ENV=.venv uv pip install speechbrain librosa "setuptools<70" "huggingface_hub<0.26"
+```
+
+The voice-check models (SpeechBrain, about 100 MB) and Whisper download on first use.
+The talking camera box on Apple Silicon needs Rosetta 2, which runs Rhubarb Lip Sync (see [Puppet](#puppet)).
+
+Set up the local draft voice once (about 4.5 GB model, reused from the Mac when it is already there):
+
+```sh
+scripts/setup-local-voice.sh     # ends with "Ready:"
+```
+
+## Make it yours
+
+Everything personal lives in one file outside the repo:
+
+```sh
+mkdir -p ~/.config/done-video && cp config.example.json ~/.config/done-video/config.json
+```
+
+The only required change is `voice_id`: copy it from your clone in the ElevenLabs web app.
+The rest is optional, and every field is explained in `_notes` inside the file:
+
+- `speaker.ai_name`, `person`, `title`: what the narrator calls itself, and an optional name bar.
+- `speaker.puppet`: a cartoon of you as a Character Animator style PSD, which talks in the camera box (see [Puppet](#puppet)); leave it `null` for no camera box.
+- `prefix`: an accent tag such as `[Indian English accent] `, if your clone drifts toward another accent.
+- `gate`: per-scene checks for accent drift and likeness, off by default.
+
+No clone yet? List a few minutes of your own clean, solo, public videos in a copy of `assets/voice/sources.example.json`, point `voice_sources` at it, then run `scripts/fetch-voice.sh` and `scripts/clone-voice.sh`.
+Only clone your own voice, or one you have permission to use.
+
+## Usage
+
+In any Claude Code session:
+
+```text
+make a done video for https://github.com/<owner>/<repo>/pull/123
+```
+
+The skill follows [`SKILL.md`](SKILL.md): preflight, gather the PBI, create the project, write the script, capture screenshots, voice and check the narration, build the scenes, render, deliver.
+Every step lists its commands, so it also works by hand.
+
+Once the PBI is tested, say `test pass`.
+[`UPLOAD.md`](UPLOAD.md) writes `youtube.txt` next to the video: title, description, chapters timed from the scenes, version line, and upload settings.
+You upload it yourself, send back the link, and the skill posts the Done on the issue.
+
+The skill voices the video as a free DRAFT first and switches to the ElevenLabs clone only after you say the draft is good (see [Draft and final](#draft-and-final)).
+
+For a short done video (30-60 s, 4 scenes), start the project with `scripts/new-video.sh --short NN-name`.
+Its camera box is the puppet in a red border with a faint voice glow, and it plays a whoosh on each cut.
+
+`examples/01-done-video/script.json` is a real done-video script.
+`examples/02-voice-clone-tutorial/` shows every component in use.
+
+Another skill can start a video from its own scenes: `scripts/new-video.sh --overlay <folder> NN-name` copies that folder over the template.
+
+## Edit a finished video
+
+Change only the lines that need it, without re-voicing the rest.
+In DRAFT mode, edit `script.json` and run `tts.dart` again: it re-voices only the lines that changed.
+The commands below are for a FINAL video voiced by ElevenLabs (`retake.dart` refuses a local voice).
+Run these from the video's `project` folder:
+
+```sh
+dart ../../../scripts/retake.dart split   # once, before you touch script.json
+# edit, add, or delete lines in script.json
+dart ../../../scripts/retake.dart build   # voices only new or changed lines, then rebuilds every scene
+dart ../../../scripts/layout.dart
+```
+
+`build` reuses every line whose text is unchanged, so a one-line fix costs about 100 credits.
+It plays each new line back through Whisper and prints what it heard next to the script.
+
+## Reinstall an old video
+
+A video without `node_modules` (for example after you freed disk space) needs its packages again.
+Run this from the video's `project` folder:
+
+```sh
+cd videos/NN-name/project && zsh ../../../scripts/install-deps.sh
+```
+
+It converts an old `package-lock.json` to `pnpm-lock.yaml` and keeps the same versions.
+It also links `node_modules/.remotion` to `.cache/remotion-browser`, so every video shares one Chrome Headless Shell.
+Remotion downloads that browser (about 100 MB) once, on the first render of any video.
+Run the script again at any time: it is safe to repeat.
+
+## API key permissions
+
+Give the key only these endpoints; everything else stays on **No Access**:
+
+| Endpoint | Access | Used for |
+|---|---|---|
+| Text to Speech | Access | Narration |
+| Voices | Write | Creating the clone, listing voices (Read is enough once the clone exists) |
+| User | Access | Reading the credit balance |
+| Sound Effects | Access | Only if you generate your own sounds |
+| Music Generation | Access | Only if you generate your own music |
+
+`scripts/permission-test.sh <clip.mp3>` proves it against a restricted key in `TEST_ELEVENLABS_KEY`.
+It makes every call the pipeline makes, clones and deletes a 10 s test voice, and expects Models and History to be refused.
+
+## Voice recipe
+
+Your config (see [Make it yours](#make-it-yours)) is the single source of the recipe; `scripts/config-path.sh` shows which file is in use.
+Each new video copies it to `src/config.json`, so later changes never alter an old video.
+The defaults below are what kept the author's clone consistent; the accent tag and the gate are opt-in.
+
+- Model `eleven_v4`, stability 0.5, similarity 0.85.
+  v4 ignores speed, style, and speaker boost, so pace comes from `scripts/pad.dart`.
+- Requests can start with an accent audio tag (`prefix`).
+  On the author's clone, 7 of 10 scenes drifted American without it, and 0 of 10 with it.
+- Scenes are merged into chunks of up to 850 characters and stitched with `previous_request_ids`, so tone carries through a video.
+- A fixed `seed` per chunk (in `src/seeds.json`) gives back the same take for the same text, about 99% identical.
+- `scripts/check.dart` checks every scene's words, and, when `gate` is set, its accent and likeness against `assets/voice/reference`; `tts.dart reroll` redoes only the chunks that fail.
+
+Tried on the author's clone and dropped:
+
+| Idea | Result |
+|---|---|
+| Stability 0.7 | The accent tag stopped working: 60-68% US |
+| Turbo v2.5, v4 Turbo | Half price, but less like the speaker, or American |
+| Clones from 2 minutes of one video | Less like the speaker than a 4 minute clone from 2 videos |
+| Pitch post-processing (Praat, Rubber Band) | Matched the numbers but sounded rough and noisy |
+| Chatterbox (local) | Higher pitch, weaker accent, less like the speaker |
+| macOS `say` (Aman) for drafts | A stock voice, not a clone: the accent and likeness gates cannot run, and the pace and tone differ from the final. Qwen3-TTS replaced it for drafts. `say` stays as the fallback when the local voice is not set up |
+
+## Draft and final
+
+A video is in one of two voice modes. The mode is `tts.provider` in the video's own `src/config.json`.
+
+| | DRAFT | FINAL |
+|---|---|---|
+| Voice | Local Qwen3-TTS clone (`qwen`) | Your ElevenLabs clone |
+| Cost | No credits | About 1 credit per character |
+| Use | Every rough edit: script, visuals, timing | One pass, after you say the draft is good |
+| Render name | `<title> draft vN.mp4`, never uploaded | `<title> vN.mp4` |
+
+A new video starts in DRAFT. If the local voice is not set up, `new-video.sh` says so in one line and uses `say`, never ElevenLabs.
+Run these from the video's `project` folder:
+
+```sh
+zsh ../../../scripts/voice-mode.sh status   # DRAFT (qwen, attempts 2) or FINAL (elevenlabs)
+zsh ../../../scripts/voice-mode.sh final    # prints the credit estimate; calls nothing
+dart ../../../scripts/tts.dart --dry-run    # lists each ElevenLabs request it would send; calls nothing
+dart ../../../scripts/tts.dart              # now ElevenLabs is billed
+zsh ../../../scripts/voice-mode.sh draft    # back to the free voice
+```
+
+`voice-mode.sh` only edits `src/config.json`. It never calls ElevenLabs: the next `tts.dart` run does, in FINAL mode.
+It does not touch the recipe (`voice_id`, `model_id`, `prefix`, `seed`), so FINAL uses what `new-video.sh` stored.
+A video whose config has no `tts` block is FINAL, which keeps the older videos working.
+After the switch, run `tts.dart`, `check.dart`, `pad.dart`, `layout.dart`, and render once.
+A third mode, RECORDED, voices the video with your own recordings and no made voice at all (see [Recorded voice](#recorded-voice)).
+
+## Local voice
+
+`tts.provider` picks the narrator. Set it per video with `voice-mode.sh`, or in the config for new videos.
+
+| Provider | What | Gates in `check.dart` |
+|---|---|---|
+| `qwen` | Qwen3-TTS clone of your voice, on the Mac (MLX). The draft voice. See [`local-voice/README.md`](local-voice/README.md) | Words, accent, and likeness all run |
+| `say` | macOS `say`: free, offline, a stock voice. The fallback when `qwen` is not set up, and the voice of `--explainer` videos | Words only: a stock voice is not a clone |
+| `elevenlabs` | Your ElevenLabs clone. The final voice | Words, accent, and likeness |
+| `recorded` | Your own recordings, cut into lines by `recorded.dart` (see [Recorded voice](#recorded-voice)) | Words only: it is your voice, so there is no clone to check |
+
+`tts.dart` voices each line on its own, so line times are exact, and keeps each voiced line in `.voice-cache/`, so a script edit re-voices only the lines that changed.
+It writes the same files as the ElevenLabs path, so `pad.dart` and `layout.dart` run unchanged.
+`tts.qwen.python`, `server`, and `config` are paths relative to the studio and default to `local-voice/`; `tts.qwen.attempts` is takes per sentence (2 is the draft default, 4 is full quality).
+`tts.say.voice` names a voice from `say -v '?'`, and `tts.say.rate` sets words a minute.
+`retake.dart` refuses a local voice, because `tts.dart` already re-voices only changed lines.
+Another local model, such as Kokoro, is one more case in `localVoice` in `scripts/tts.dart`.
+
+The local voice is not as lively as ElevenLabs yet. `local-voice/README.md` holds the energy numbers and the round log.
+
+## Recorded voice
+
+Record the narration yourself, and the video has your real voice and no AI voice.
+`voice-mode.sh recorded` sets `tts.provider` to `recorded` for 1 video, and `voice-mode.sh draft` or `final` switches back, so the other voices keep working.
+To use your recordings for 1 run only, run `tts.dart --recorded`.
+
+Put the recordings in the video's `recordings/` folder (`tts.recorded.dir`). Any of wav, m4a, aiff, mp3, or flac works. Name them like this:
+
+| File | Holds |
+|---|---|
+| `take.wav` | 1 continuous take of the whole script |
+| `intro.wav` | every line of the scene `intro`, read in order with a short pause between lines |
+| `intro_2.wav` | line 2 of `intro` alone (lines count from 1, as in the reading sheet) |
+
+A line uses its own file first, then its scene's file, then the take. So 1 bad line costs 1 new recording, not a new take.
+A file with any other name is ignored, and the build says so.
+
+```sh
+zsh ../../../scripts/voice-mode.sh recorded
+dart ../../../scripts/recorded.dart --dry-run   # which file voices each line; changes nothing
+dart ../../../scripts/recorded.dart
+dart ../../../scripts/pad.dart 0.2              # 0 keeps the pauses recorded.dart made
+dart ../../../scripts/layout.dart
+```
+
+`recorded.dart` writes what `tts.dart` writes (`public/audio/<scene>.mp3`, `src/timings.raw.json`), so `pad.dart`, `layout.dart`, `check.dart`, and the render run unchanged. Per file, it:
+
+1. Sets the loudness to -16 LUFS, what `layout.dart` targets for the narration (the last render measured -16.4).
+2. Gets word times from the local Whisper (`tts.recorded.model`, `small.en` by default; `--model medium.en` is slower and more exact).
+3. Matches the heard words to the script, so a take or a scene file is cut into lines. A missing, repeated, or extra word stays local to where it happens.
+4. Cuts each line in the real silence around it, trims the leading and trailing silence, and keeps `tts.recorded.pad` (0.1 s) of clean silence each side.
+   Lines of a scene are joined with `tts.recorded.gap` (0.25 s).
+
+It prints what Whisper heard next to the script for every line that is not an exact match, as `retake.dart build` does.
+A line with no recording, or one that is far from the script (over 30% of its letters), stops the build and names the line, so nothing wrong reaches a render.
+`--force` builds anyway, and the subtitles then show the script, not what you said. If the script is what changed, edit `script.json`.
+
+Extra files: `public/audio/recorded/<scene>_<n>.wav` (1 clip per line), `src/recorded.json` (which file made which scene; `short.dart` checks it), and word times in `timings.raw.json`, which `layout.dart` copies into `layout.json`.
+With word times, the subtitles in `captions.ts` cut on the real words. An older video keeps its own `captions.ts`; copy the template one over it to get them.
+`--scenes intro..help` (or `intro,what`) builds only those scenes, for a test clip; run without it to build everything.
+
+In this mode the AI voice badge and the camera box's "AI VOICE" tag are gone, `check.dart` runs the words gate only, and `retake.dart` refuses.
+The intro and outro lines that say "I'm {{ai_name}}" are about the AI voice. Rewrite them, because it is you talking.
+
+## Subtitles
+
+`template/src/captions.ts` follows the Netflix English timed text guide and the BBC subtitle guidelines:
+
+- At most 2 lines of 42 characters, bottom-heavy, with no one- or two-word lines.
+- Break after punctuation, then before a conjunction, then before a preposition.
+- Never split an article from its noun, a name or title, a pronoun or auxiliary from its verb, or a number from what it counts.
+- No cue of 1 or 2 words, unless it is the whole line: a short tail joins the cue before it.
+- At least 0.8 s on screen, held 0.5 s after the speech ends.
+
+Add multi-word product names to `TERMS` in `captions.ts` so they stay on one line.
+
+## Shorts
+
+Make a vertical Short from 1 chapter (1 scene) of a finished video, or from a run of scenes. Run it from the video's `project` folder, after `layout.dart`:
+
+```sh
+dart ../../../scripts/short.dart what                                          # out/short-what.mp4
+dart ../../../scripts/short.dart what..help --hook "One session, or a company"   # 2 scenes
+dart ../../../scripts/short.dart what --no-render                              # prepare only
+```
+
+- 1080x1920, 60 s at most (a longer run stops the command and lists each scene's length).
+- Not a crop: `short-video/vertical/Short.tsx` draws the scenes from `scenes.tsx` again, whole, on a 1920x1080 stage scaled to the width of the frame.
+  The text inside a scene is small on a phone, so the captions carry the words.
+  A channel video (`new-video.sh --channel`, see [Scene library](#scene-library)) renders natively instead: `short-video/native/NativeShort.tsx` draws the library's scenes at 1080x1920, in their 9:16 layouts, so no text is shrunk.
+- The hook line is on screen from frame 1: `--hook`, else the scene's `"hook"` in `script.json`, else its first line.
+- Big captions, 1-4 words at a time, light each word as it is spoken. Word times come from `layout.json` (recorded voice), or from Whisper on the narration.
+- The voice is the scene audio the long video plays, set to -16 LUFS, with the quiet music bed and a whoosh on each cut.
+  When `tts.provider` is `recorded`, a scene that was not built from your recordings, or whose recording changed after the build, stops the command.
+- A black card (`"black"` in `script.json`) is cut, and the camera box and the long video's subtitles are left out.
+- It ends with the size, length, and loudness of the file. Look at 2 frames before you upload.
+
+`short.dart` copies `short-video/vertical/` to `src/short/` on every run; edit it in the studio, not in the video.
+`short-video/template` is a different thing: the 16:9 short done video that `new-video.sh --short` starts. The vertical Short uses its look: the same type and colours, and a whoosh on each cut.
+
+## Scene library
+
+`scenes/` is the For Curious Beings design system: 1 library of Remotion scenes (title card, number reveal, world map, globe, label with a leader line, orbit diagram, chart, the guide character, the channel mark), a theme switch (A clean data, B sketch with the guide, C clean data with the guide, D flat stub), and native layouts for 16:9 and 9:16.
+`scenes/README.md` is the reference.
+
+```sh
+scripts/new-video.sh --channel 12-sail-line                      # a faceless video that uses the library
+dart ../../../scripts/render.dart --theme B                      # 1 flag picks the theme, 1920x1080
+dart ../../../scripts/render.dart --theme B --tall               # the same video laid out natively for 1080x1920
+dart ../../../scripts/short.dart beat --theme B                  # a Short: the 9:16 layouts, not a shrunk 16:9 stage
+```
+
+`script.json` can name the theme (`"theme": "B"` on the first scene); `layout.dart` copies it to `layout.json`, and a render flag overrides it.
+The channel look is a theme switch, not a rebuild, so the style test (`channel/style_test.md` in the factory repo) can rotate styles with 1 flag.
+`examples/beach-beat/` is the 14-second demo in all 3 complete themes.
+
+## Puppet
+
+`speaker.puppet` points at a cartoon of you as a Photoshop file, laid out the way Adobe Character Animator expects.
+The camera box shows it for the whole video, intro and outro included, and its mouth moves with the narration.
+
+- A `Head` group holds the head art and a `Mouth` group with 1 layer per mouth shape.
+  Use the Character Animator names; the builder needs `Neutral`, `M`, `S`, `D`, `Ah`, `Oh`, `W-Oo`, `F`, and `L`.
+- A `Body` group is optional; the box shows the top of it.
+- The eyes stay in the head art: `scripts/puppet.py` finds the eye whites and draws 3 lid stages for the blinks.
+
+`new-video.sh` runs `scripts/puppet.py` to cut the layers into `public/puppet/`.
+`layout.dart` runs [Rhubarb Lip Sync](https://github.com/DanielSWolf/rhubarb-lip-sync) on each scene's narration, with the scene's script as the dialog, and writes `src/mouth.json`.
+The first run downloads Rhubarb 1.14.0 into `.cache/` and checks it against the release checksum.
+The macOS build is Intel only, so Apple Silicon runs it through Rosetta 2 (`softwareupdate --install-rosetta --agree-to-license`).
+Scenes run in parallel, about 15 s for a 45 s video, and `check/mouth/` caches each one, so a re-layout costs nothing.
+
+The mouth follows the narration track alone, and only inside the narration lines.
+A clip of someone else talking, the music, and the sound effects never move it.
+The puppet blinks every 2.3-6 s from a fixed seed, and its head sways and lifts a little while the narrator talks.
+2 renders give the same frames.
+
+Tried and dropped:
+
+| Idea | Result |
+|---|---|
+| Neural talking heads (LivePortrait, MuseTalk, LatentSync, Wan S2V) | CUDA only or very slow on a Mac, untested on a bearded cartoon, and several licences bar commercial use |
+| Mouth timing from the final mix | The mouth moved on 412 of 614 frames where someone else talked in a clip |
+| Cutting the brows out of flat head art | Left smudges; brows that move need their own layers in the PSD |
+
+## Components
+
+All in `template/src/ui.tsx`:
+
+| Component | Use |
+|---|---|
+| `IntroCard`, `OutroCard` | Title card, AI disclosure badge, name lower third, recap |
+| `LowerThird`, `SswTag` | SSW TV name bar; "✅ Good example", "❌ Bad example" and "LEARN MORE" bars |
+| `BrowserShot` | Real screenshot with a gliding cursor, click sound, red highlight, zoom, and blur boxes |
+| `Terminal` | Commands and prompts type out with the typewriter sound |
+| `PermissionPicker` | Endpoint list where the cursor clicks each access level |
+| `PiP` | Bottom-right camera box: the talking puppet (`puppet.tsx`), the "AI VOICE" label, and a voice meter |
+| `Captions` | Burned-in subtitles |
+| `Header`, `Chip`, `Appear`, `Between`, `Backdrop` | Titles, chips, and timed reveals |
+
+## Assets
+
+| Path | What |
+|---|---|
+| `assets/voice/sources.json` | Which public videos and seconds your voice clips come from; `fetch-voice.sh` rebuilds them |
+| `assets/voice/*.mp3`, `assets/voice/reference/*.mp3` | Your training and held-out clips; never committed |
+| `speaker.puppet` in your config | Optional Character Animator style PSD of you for the camera box; never committed |
+| `assets/sfx/` | Typewriter loop and mouse click from ElevenLabs sound effects; good-example ding and bad-example buzzer from free YouTube uploads. `sources.json` lists where each came from |
+| `assets/music/minimal_lofi_bed_4min.mp3` | A 4 minute quiet bed from ElevenLabs music |
+
+They ship with the repo, so nothing has to be generated.
+To use your own, drop any royalty-free files (for example from the YouTube Audio Library) into `assets/sfx` and `assets/music` with the same names.
+The shipped files sit near -20 LUFS, so match that or adjust the `volume` values in `ui.tsx` and `Video.tsx`.
+
+## Pronunciation
+
+Put spoken spellings in a line's `tts` field; `say` stays the subtitle text.
+
+- Spell acronyms out: "S S W", "P B I", "Y T D L P".
+- Write money, percentages, times, and years in words.
+- A product name the accent bends ("Claude" heard as "Clod") is only flagged, never re-rolled: subtitles show the right word.
+
+## Gotchas
+
+- The `character-cost` response header is the true price of a call; `tts.dart` prints the total.
+- Starter caps output at `mp3_44100_128`, and unused credits roll over for up to 2 months.
+- Capture screenshots with the Playwright MCP browser, log in yourself, and blur key hints.
+- On YouTube, answer "altered or synthetic content" with Yes.
+
+## License
+
+Code: [MIT](../../LICENSE), Harkirat Singh.
+The music and sound effects in `assets/` were generated with ElevenLabs on a paid plan; check the ElevenLabs terms before reusing them elsewhere.
+No voice clips are included.

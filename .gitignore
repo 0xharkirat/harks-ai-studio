@@ -3,33 +3,34 @@ node_modules/
 .venv/
 .cache/
 .DS_Store
+__pycache__/
+
+# The studio is skills/done-video, so the paths below start there.
+# Run `git status --ignored` after you move a folder: a path that no longer matches makes git add private files.
 
 # Raw voice: rebuild with scripts/fetch-voice.sh from assets/voice/sources.json.
 # Never commit it: clean solo clips are everything someone needs to clone a voice.
-assets/voice/**/*.mp3
-assets/voice/.download/
+skills/done-video/assets/voice/**/*.mp3
+skills/done-video/assets/voice/.download/
+skills/done-video/assets/voice/ref_energetic.wav
 
 # Personal: brand assets, and everything a video produces
-assets/brand/
-videos/
-voice-tests/
+skills/done-video/assets/brand/
+skills/done-video/videos/
+/videos
+/voice-tests/
 
 # Local draft voice: the venv, the model, the Hugging Face cache and every output are rebuilt by scripts/setup-local-voice.sh
-local-voice/.venv/
-local-voice/models/
-local-voice/hf/
-local-voice/out/
-local-voice/.whisper-python
-local-voice/__pycache__/
-assets/voice/ref_energetic.wav
+skills/done-video/local-voice/models/
+skills/done-video/local-voice/hf/
+skills/done-video/local-voice/out/
+skills/done-video/local-voice/.whisper-python
 
 # Regenerable from the mp3 next to it
-assets/music/*.wav
+skills/done-video/assets/music/*.wav
 
-# Template build output
-template/src/config.json
-
-# Personal config: your voice id, puppet, accent and clip list live in ~/.config/done-video/
+# Personal config: your voice id, puppet, accent and clip list live in ~/.config/done-video/.
+# Any config.json is personal or build output (template/src/config.json is a snapshot), so it is ignored at any depth.
 config.json
 voice.json
-assets/voice/sources.json
+skills/done-video/assets/voice/sources.json
