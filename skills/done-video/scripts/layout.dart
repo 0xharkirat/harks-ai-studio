@@ -16,7 +16,7 @@ Future<void> main() async {
   // "black": seconds of black screen before a scene, "card": text shown on it (such as "Before" or "After"),
   // and "reveal": the sfx key (ui.tsx) that plays as the scene appears.
   final black = {for (final e in script.entries) e.key: (e.value['black'] as num?)?.toDouble() ?? 0.0};
-  // "theme": "A" | "B" | "C" | "D" (or a name such as "sketch") names the look of a channel video (scenes/README.md).
+  // "theme": "A" | "B" | "C" | "D" (or a name such as "sketch") names the look of a video built on a scene library (see that library's README).
   // 1 theme per video: the first scene that names one sets it, and a different one later is ignored with a warning.
   String? theme;
   for (final s in t) {

@@ -10,11 +10,11 @@ import 'recording.dart';
 //   dart short.dart what                                  # the scene "what", out/short-what.mp4
 //   dart short.dart what..help --hook "Claude Code is 1 session. Paperclip adds the company."
 //   dart short.dart what --out ~/Desktop/short.mp4 --no-render   # only prepare src/short/; render by hand
-//   dart short.dart what --theme B                        # a channel video (new-video.sh --channel): the same Short in theme B
+//   dart short.dart what --theme B                        # a video with a scene library in src/lib: the same Short in theme B
 //
 // A done video's scenes are not a crop of the 16:9 render: scenes.tsx is drawn again by short-video/vertical/Short.tsx on a
 // 1920x1080 stage scaled to the width of the frame, under a hook line, above big word-by-word captions.
-// A channel video (it has src/lib, the scene library) renders natively instead: short-video/native/NativeShort.tsx draws the
+// A video with a scene library (src/lib) renders natively instead: the library's short-native/NativeShort.tsx, copied into the project, draws the
 // same scene components at 1080x1920, where they reflow to their 9:16 layouts, so no text is shrunk. The theme comes from
 // script.json (layout.json), or --theme.
 // The narration is the scene audio the long video plays (public/audio/<scene>.wav), mixed again and set to -16 LUFS.
@@ -107,9 +107,10 @@ Future<void> run(List<String> args) async {
     if (!File(f).existsSync()) fail('$f is missing: run this from the video\'s project folder, after tts.dart or recorded.dart, pad.dart and layout.dart');
   }
   final layout = jsonDecode(File('src/layout.json').readAsStringSync()) as Map;
-  // A channel video has the scene library: its Short is laid out natively for 9:16 (see the header).
+  // A video with a scene library: its Short is laid out natively for 9:16 (see the header).
   final native = File('src/lib/index.ts').existsSync();
-  if (themeArg != null && !native) fail('--theme is for a channel video (new-video.sh --channel); this video has no scene library in src/lib');
+  if (themeArg != null && !native) fail('--theme is for a video with a scene library; this video has no src/lib');
+  if (native && !Directory('short-native').existsSync()) fail("this video has a scene library in src/lib but no short-native/: run the library's scenes.dart sync");
   final fps = layout['fps'] as int;
   final all = layout['scenes'] as List;
   final script = {for (final s in jsonDecode(File('script.json').readAsStringSync()) as List) s['id'] as String: s as Map};
@@ -223,7 +224,7 @@ Future<void> run(List<String> args) async {
   Directory('src/short').createSync(recursive: true);
   // The native Short reuses vertical/Short.tsx for its caption paging, then replaces the composition root.
   for (final dir in ['vertical', if (native) 'native']) {
-    for (final f in Directory('$studio/short-video/$dir').listSync().whereType<File>()) {
+    for (final f in Directory(dir == 'native' ? 'short-native' : '$studio/short-video/$dir').listSync().whereType<File>()) {
       f.copySync('src/short/${f.path.split('/').last}');
     }
   }
