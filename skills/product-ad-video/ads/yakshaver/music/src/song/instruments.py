@@ -10,7 +10,7 @@ import numpy as np
 
 from engine import drums, gamesfx, synths
 from engine.dsp import SR, butter_hp, butter_lp, fade_edges
-from .theory import CHORDS, LOGO_BLOOM, LOGO_NOTES, STEP
+from .theory import CHORDS, STEP, logo_motif
 
 _CACHE: dict = {}
 
@@ -200,19 +200,20 @@ def _stand_in(buf, e, idx, name):
 def render_logo(buf_logo, ev):
     t0 = ev["t"]
     v = ev.get("vel", 1.0)
+    notes, bloom = logo_motif(ev)
     if ev.get("teaser"):
-        # muted bell, the first four notes only: the line hangs unresolved
-        for off, m in LOGO_NOTES[:4]:
+        # muted bell, every note but the last: the line hangs unresolved
+        for off, m in notes[:-1]:
             place(buf_logo, cached(("tbell", m), lambda m=m: synths.bell(m, 0.5, 0.8, muted=True)), t0 + off, 0.55 * v)
         return
-    for k, (off, m) in enumerate(LOGO_NOTES):
-        last = k == len(LOGO_NOTES) - 1
+    for k, (off, m) in enumerate(notes):
+        last = k == len(notes) - 1
         dur = 2.6 if last else 0.9
         dec = 1.0 if last else 0.34
         place(buf_logo, cached(("lbell", m, last), lambda m=m, dur=dur, dec=dec: synths.bell(m, dur, 1.0, decay=dec)), t0 + off, (0.95 if not last else 1.0) * v)
         place(buf_logo, cached(("lpl", m), lambda m=m: synths.pluck(m, 0.12, 1.0, bright=1.3, decay=0.14)), t0 + off, 0.55 * v)
-    off = LOGO_NOTES[-1][0]
-    for m in LOGO_BLOOM:
+    off = notes[-1][0]
+    for m in bloom:
         place(buf_logo, cached(("lbloom", m), lambda m=m: synths.bell(m, 2.0, 0.8)), t0 + off, 0.55 * v)
     place(buf_logo, cached(("lbloom", 100), lambda: synths.bell(100, 1.4, 0.6)), t0 + off, 0.22 * v)   # E7 air
 

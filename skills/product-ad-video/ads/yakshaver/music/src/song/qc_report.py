@@ -8,7 +8,7 @@ from engine.dsp import SR
 from engine.fx import true_peak
 from . import analysis as A
 from .instruments import PENTA
-from .theory import CHORDS, KEY_PCS, LOGO_BLOOM, LOGO_NOTES
+from .theory import CHORDS, KEY_PCS, logo_motif
 
 
 def check_key(S):
@@ -29,9 +29,10 @@ def check_key(S):
         for e in S.ev[k]:
             chk(k, e["t"], e["midi"])
     for e in S.ev["logo"]:
-        for off, m in LOGO_NOTES:
+        notes, bloom = logo_motif(e)
+        for off, m in notes:
             chk("logo", e["t"] + off, m)
-        for m in LOGO_BLOOM + [100]:
+        for m in bloom + [100]:
             chk("logo", e["t"], m)
     for i, e in enumerate(getattr(S, "foley", [])):
         if e["type"] in ("pop", "ping", "blip"):

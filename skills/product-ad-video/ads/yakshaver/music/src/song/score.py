@@ -228,8 +228,9 @@ class Score:
     def bell(self, t, dur, midi, vel=0.8, muted=False):
         self.ev["bell"].append(dict(t=t, dur=dur, midi=midi, vel=vel, muted=muted))
 
-    def logo(self, t, vel=1.0, teaser=False):
-        self.ev["logo"].append(dict(t=t, vel=vel, teaser=teaser))
+    def logo(self, t, vel=1.0, teaser=False, motif=None):
+        """The sonic logo. `motif` picks the notes (theory.LOGO_MOTIFS): None is the TinaCMS motif, "yak" is YakShaver's."""
+        self.ev["logo"].append(dict(t=t, vel=vel, teaser=teaser, motif=motif))
 
     # ----- automation / sidechain
     def set_auto(self, stem, param, points):

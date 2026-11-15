@@ -26,7 +26,7 @@ from song import cues, export, instruments, mix, qc_report
 from song.score import Score
 from song.theory import CHORDS, tb
 
-CUES = ["anthem", "anthem2", "anthem3", "thirty", "fifteen", "six", "dev"]
+CUES = ["anthem", "anthem2", "anthem3", "thirty", "fifteen", "six", "dev", "yak"]
 
 
 def render_cue(S, out_dir: Path, root: Path = ROOT, verbose=True, target=-14.0, extras=True):

@@ -92,3 +92,44 @@ def hook_bar(i: int, ending: str = "open"):
 LOGO_NOTES = [(0.000, 76), (0.125, 81), (0.250, 83), (0.500, 85), (0.750, 88)]
 LOGO_BLOOM = [81, 85]            # held under the final note (A5, C#6) beside E6
 LOGO_LEN = 1.5                   # last note at 0.75 s, main body rings to about 1.5 s; tail is natural
+
+
+# --------------------------------------------------------------------------- YakShaver sonic logo
+# "Yak . sha-ver-!": E5, a hop down to C#5, then F#5 and A5 in quick steps. The rhythm sits on the 16th grid of the
+# film's 90 BPM (1/6 s), so the logo lands as 1 beat: notes at 0, 2, 3 and 4 sixteenths. The last note is A5, and
+# a C#6 + E6 bloom rings over it (an A major chord on top). The teaser plays the first 3 notes, muted, and stops on F#5.
+YAK_LOGO_NOTES = [(0.000, 76), (1 / 3, 73), (0.500, 78), (2 / 3, 81)]
+YAK_LOGO_BLOOM = [85, 88]        # held under the final note (C#6, E6) beside A5
+YAK_LOGO_LEN = 1.5
+
+# Which motif an `S.logo(...)` event plays: None is the TinaCMS motif above.
+LOGO_MOTIFS = {None: (LOGO_NOTES, LOGO_BLOOM), "tina": (LOGO_NOTES, LOGO_BLOOM), "yak": (YAK_LOGO_NOTES, YAK_LOGO_BLOOM)}
+
+
+def logo_motif(ev):
+    """(notes, bloom) of a logo event: (offset in seconds, MIDI note) pairs and the bloom notes."""
+    return LOGO_MOTIFS[ev.get("motif")]
+
+
+# --------------------------------------------------------------------------- YakShaver progressions and hook
+YAK_INTRO = ["F#m9", "Dmaj7"]
+YAK_VERSE = ["F#m7", "Dmaj7", "A/C#", ("E", "Esus4"), "F#m7", ("Dmaj7", "Bm7")]
+YAK_PRE = [("Esus4", "E")]
+YAK_BUILD = ["F#m7", "E"]
+
+# The hook over A | E/G# | F#m7 | Dadd9 (one phrase, 4 bars): (step in the bar, midi, length in 16ths).
+# Bar 1 is the logo's bounce (E5 C#5 F#5 A5); bar 2 plays it again a fifth lower; bar 3 climbs to a long C#6.
+YAK_HOOK = {
+    0: [(0, 76, 2), (2, 73, 2), (4, 78, 2), (6, 81, 4), (10, 83, 2), (12, 81, 2), (14, 78, 2)],     # E5 C#5 F#5 A5 . B5 A5 F#5
+    1: [(0, 71, 2), (2, 68, 2), (4, 73, 2), (6, 76, 4), (10, 78, 2), (12, 76, 2), (14, 73, 2)],     # B4 G#4 C#5 E5 . F#5 E5 C#5
+    2: [(0, 78, 2), (2, 81, 2), (4, 83, 2), (6, 85, 5), (11, 83, 2), (13, 81, 3)],                  # F#5 A5 B5 C#6(long) B5 A5
+}
+YAK_END_OPEN = [(0, 81, 3), (3, 78, 3), (6, 74, 2), (8, 76, 8)]                                    # A5 F#5 D5 E5(long, the 9th)
+YAK_END_TURN = [(0, 81, 3), (3, 78, 3), (6, 74, 2), (8, 76, 3), (11, 80, 3), (14, 83, 2)]          # ... E G# B up into the next bar
+
+
+def yak_hook_bar(i: int, ending: str = "open"):
+    """Notes of bar i (0..3) of the YakShaver hook phrase."""
+    if i < 3:
+        return YAK_HOOK[i]
+    return YAK_END_OPEN if ending == "open" else YAK_END_TURN

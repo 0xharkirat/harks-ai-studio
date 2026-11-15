@@ -6,7 +6,7 @@ import math
 from . import blocks as B
 from .score import Score
 from .theory import (BAR, BEAT, BRIDGE, BUILD, CHORUS_A, CHORUS_B, HOOK_TAG, INTRO, STEP, VERSE,
-                     tb, tbeat)
+                     YAK_BUILD, YAK_INTRO, YAK_PRE, YAK_VERSE, tb, tbeat, yak_hook_bar)
 
 
 def _third_below(m):
@@ -836,4 +836,222 @@ def six() -> Score:
     # 2.5: final chord, logo at 3.0, end hit at 5.0
     final_chord(S, 2.5, 0.5, 2.5, 2.5)
     S.plan((0.0, 1.375, -9.0), (1.5, 2.0, 0.5), (2.0, 2.5, 0.0), (2.5, 3.0, 0.0), (3.0, 5.0, -4.5), (5.0, 6.0, -6.5))
+    return S
+
+
+# --------------------------------------------------------------------------- yak (the YakShaver ad)
+
+
+def _yak_pads(S, bar, prog, cutoff=2000.0, vel=0.85, atk=0.06, rel=0.5, voicing=None):
+    """One pad chord per bar (or 2 per bar for a tuple entry), always at 2200 Hz or lower."""
+    for i, entry in enumerate(prog):
+        parts = [(0, entry[0], 1.0), (8, entry[1], 1.0)] if isinstance(entry, tuple) else [(0, entry, BAR)]
+        for step, name, dur in parts:
+            kw = dict(cutoff=min(cutoff, 2200.0), atk=atk, rel=rel)
+            if voicing:
+                kw["voicing"] = voicing
+            S.chord(tb(bar + i, step), dur - 0.02, name, "pad", vel=vel, **kw)
+
+
+def _yak_lead(S, bar, ending="open", vel=0.7, layer="main", n_bars=4):
+    """The YakShaver hook, at 70% (the calm lead)."""
+    for i in range(n_bars):
+        for step, m, ln in yak_hook_bar(i, ending):
+            accent = 1.0 if step in (0, 8) else (0.93 if ln >= 3 else 0.88)
+            S.lead(tb(bar + i, step), ln * STEP * 0.98, m, vel=vel * accent, layer=layer)
+
+
+def _yak_harmony(S, bar, ending="turn", vel=0.35):
+    for i in range(4):
+        for step, m, ln in yak_hook_bar(i, ending):
+            S.lead(tb(bar + i, step), ln * STEP * 0.98, _third_below(m), vel=vel, layer="harm", vib=0.6, bright=0.7)
+
+
+def _yak_trot(S, bar, n=1, e=1.0):
+    """Verse groove: a soft kick, a rim on 2 and 4 (the calm kit has no clap), closed hats and light ticks."""
+    for k in range(n):
+        b = bar + k
+        for s, v in ((0, 0.8), (6, 0.55), (10, 0.65)):
+            S.kick(tb(b, s), v * e, "soft")
+        for s in (4, 12):
+            S.rim(tb(b, s), 0.36 * e)
+        for s in range(0, 16, 2):
+            S.hatC(tb(b, s), (0.46 if s % 4 == 0 else 0.34) * e)
+        for s in (1, 3, 7, 9, 11, 15):
+            S.tick(tb(b, s), 0.3 * e)
+
+
+def _yak_groove(S, bar, n=1, e=1.0, drop=False, kv="soft"):
+    """The calm chorus kit: a kick on 1 and 3, a rim on 4 and closed hats. `drop` softens the first kick (the drop)."""
+    for k in range(n):
+        b = bar + k
+        for s in (0, 8):
+            S.kick(tb(b, s), 0.75 * e * (0.8 if drop and k == 0 and s == 0 else 1.0), kv)
+        S.rim(tb(b, 12), 0.4 * e)
+        for s in range(16):
+            if s % 4 == 0:
+                S.hatC(tb(b, s), 0.42 * 0.7 * e)
+            elif s % 2 == 1:
+                S.hatC(tb(b, s), (0.26 + 0.05 * ((s * 7) % 3)) * 0.7 * e)
+
+
+def yak() -> Score:
+    """The YakShaver ad (cut `anthem`, 57 design s, 76 s real). Written on the 120 BPM design grid, played at 90 BPM
+    (retime 4/3). The scene times are the same as the TinaCMS anthem v2 (design s): open 0-4, title 4-8, problem 8-22
+    (verse 8-20, pre-chorus 20-22), edit 22-30 (chorus 1), git 30-38 (bridge), devs 38-41 (build), proof 41-49
+    (chorus 2), cta 49-57 (outro). It is written in the calm recipe from the start (no impact, riser, stop or tom,
+    no fill into a drop, pads in place of supersaws, a light groove). Bars 1-29 are written (58 design s); the last
+    2 beats of the build (bar 21) are cut, so chorus 2 lands on the proof cut at design 41.
+    Its own sonic logo (theory.YAK_LOGO_NOTES) plays as a teaser at design 0.5, on the title cut (design 4.0) and on the
+    end card (design 49)."""
+    S = Score("yak", 29, 58.0)
+    S.section("open", "Open: the dark editor", 1, 2)
+    S.section("title", "Title: the logo", 3, 4)
+    S.section("verse", "Verse: the PBI problem", 5, 10)
+    S.section("pre", "Pre-chorus: Jack's answer", 11, 11)
+    S.section("chorus1", "Chorus 1: record it", 12, 15)
+    S.section("bridge", "Bridge: the GitHub issue", 16, 19)
+    S.section("build", "Build: sends to", 20, 21)
+    S.section("chorus2", "Chorus 2: proof", 22, 25)
+    S.section("outro", "Outro: try it today", 26, 29)
+    S.fade_out = (54.8, 57.9)
+
+    # ---- bars 1-2: open (a dark editor and a blinking caret): a quiet pad, a sub, the logo's teaser (it stops on F#5)
+    S.chord(tb(1), 2.0, "F#m9", "pad", vel=0.8, cutoff=1300.0, atk=0.9, rel=0.6, voicing="sw")
+    S.chord(tb(2), 1.9, "Dmaj7", "pad", vel=0.8, cutoff=1300.0, atk=0.3, rel=0.4, voicing="sw")
+    S.bass(tb(1), 1.9, 30, "sub", vel=0.32)
+    S.bass(tb(2), 1.85, 38, "sub", vel=0.32)
+    S.logo(0.5, vel=0.8, teaser=True, motif="yak")
+
+    # ---- bars 3-4: title. The logo lands on the cut with the chords and the bass under it, a little lower;
+    # they come back over 1.5 s (to design 6.0), and only then do the drums enter (bar 4).
+    S.crash(4.0, 0.3)
+    S.logo(4.0, motif="yak")
+    S.chord(4.0, 3.0, "Aadd9", "pad", vel=0.65, cutoff=2000.0, atk=0.12, rel=0.6, voicing="sw")
+    S.chord(4.0, 3.0, "Aadd9", "pad", vel=0.8, cutoff=1800.0, atk=0.15, rel=0.8)
+    S.chord(7.0, 1.0, "E/G#", "pad", vel=0.65, cutoff=2000.0, atk=0.08, rel=0.4, voicing="sw")
+    S.chord(7.0, 1.0, "E/G#", "pad", vel=0.8, cutoff=1800.0, atk=0.1, rel=0.6)
+    S.bass(4.0, 1.9, 33, "sub", vel=0.7)
+    S.bass(6.0, 0.9, 33, "sub", vel=0.7)
+    S.bass(7.0, 0.95, 32, "sub", vel=0.7)
+    B.d_light(S, 4, 1, 0.9)
+    S.duck(6.0, 8.0, depth=0.105, tau=0.12)
+    S.set_auto("chords", "gain", [(3.9, 0.0), (4.1, -4.0), (4.6, -4.0), (6.0, 0.0)])
+    S.set_auto("bass", "gain", [(3.9, 0.0), (4.1, -1.5), (4.6, -1.5), (6.0, 0.0)])
+    S.set_auto("logo", "gain", [(3.9, 0.0), (4.0, 1.5), (5.5, 1.5), (5.65, 0.0)])
+
+    # ---- bars 5-10: verse (cool, mechanical): e-piano stabs, a plucked bass, a pad, a trotting groove.
+    # The arp joins at bar 7. No clap, no fill.
+    _yak_trot(S, 5, 6, 0.9)
+    B.bass_pattern(S, 5, YAK_VERSE, B.BASS_VERSE, "pluck", 0.85)
+    B.keys_stabs(S, 5, YAK_VERSE, [(0, 1.0), (3, 0.7), (6, 0.85), (10, 0.75), (13, 0.7)], vel=0.78)
+    B.chords_pad(S, 5, YAK_VERSE, cutoff=1400.0, vel=0.55)
+    B.arp_pluck(S, 7, YAK_VERSE[2:], B.ARP_SPARSE, vel=0.5)
+    S.duck(8.0, 20.0, depth=0.09, tau=0.1)
+
+    # ---- bar 11: pre-chorus on Esus4 -> E while Jack answers. The kit plays on into the drop (no roll, no cut);
+    # a soft pluck pedal rises, at half the old level; the chords stay open.
+    S.chord(20.0, 1.0, "Esus4", "pad", vel=0.75, cutoff=1800.0, atk=0.1, rel=0.4)
+    S.chord(21.0, 1.0, "E", "pad", vel=0.8, cutoff=2200.0, atk=0.05, rel=0.3)
+    S.bass(20.0, 1.85, 40, "sub", vel=0.6)
+    _yak_trot(S, 11, 1, 0.8)
+    pedal_arp(S, 20.0, 21.875, v0=0.12, v1=0.33)
+
+    # ---- bars 12-15: chorus 1 (the drop on the click): pads, a sub on the off-beats, a light groove, the hook at 70%
+    S.crash(22.0, 0.3)
+    _yak_groove(S, 12, 4, 1.0, drop=True)
+    _yak_pads(S, 12, CHORUS_A, cutoff=2100.0, vel=0.85)
+    _yak_pads(S, 12, CHORUS_A, cutoff=1800.0, vel=0.35, atk=0.1, voicing="sw")
+    B.bass_pattern(S, 12, CHORUS_A, B.BASS_OFFBEAT, "sub", 1.0)
+    _yak_lead(S, 12, "open")
+    B.arp_pluck(S, 12, CHORUS_A, B.ARP_UP, vel=0.45)
+    S.duck(22.0, 30.0, depth=0.186, tau=0.12)
+
+    # ---- bars 16-19: bridge (git): half-time, mechanical ticks and a 16th pluck. The chords open a little each bar.
+    S.crash(30.0, 0.24)
+    for i in range(4):
+        b = 16 + i
+        S.kick(tb(b, 0), 0.72, "half")
+        S.kick(tb(b, 8), 0.72, "half")
+        S.rim(tb(b, 12), 0.4)
+        for s in range(16):
+            S.tick(tb(b, s), 0.34 if s % 4 == 0 else 0.2)
+        for s in (2, 6, 10, 14):
+            S.hatC(tb(b, s), 0.22)
+    for i, cutoff in enumerate((900.0, 1100.0, 1500.0, 1900.0)):
+        _yak_pads(S, 16 + i, BRIDGE[i:i + 1], cutoff=cutoff, vel=0.7, atk=0.12)
+    B.bass_pattern(S, 16, BRIDGE, B.BASS_HALF, "sub", 0.7)
+    B.arp_pluck(S, 16, BRIDGE, B.ARP_MECH, vel=0.62)
+    S.duck(30.0, 38.0, depth=0.135, tau=0.14)
+
+    # ---- bars 20-21: build ("sends to"): F#m7 -> E. The groove plays on and the chords stay open: no roll, no riser,
+    # no filter, no cut. A rim on the last beat before the drop, a soft 16th pluck. Bar 21 loses its last 2 beats below.
+    _yak_pads(S, 20, YAK_BUILD, cutoff=2100.0, vel=0.8)
+    _yak_pads(S, 20, YAK_BUILD, cutoff=1800.0, vel=0.3, atk=0.1, voicing="sw")
+    B.bass_pattern(S, 20, [YAK_BUILD[0]], B.BASS_OFFBEAT, "sub", 0.9)
+    B.bass_pattern(S, 21, [YAK_BUILD[1]], [(0, 0, 2, 0.85), (2, 0, 3, 1.0), (6, 0, 3, 0.95), (10, 0, 3, 1.0)], "sub", 0.9)
+    for b in (20, 21):
+        for s in (0, 8):
+            S.kick(tb(b, s), 0.75 * (0.75 if b == 21 else 1.0), "soft")
+        S.rim(tb(b, 12), 0.38)
+    S.rim(tb(21, 4), 0.38)
+    for i in range(16):
+        S.hatC(tb(20) + i * 0.25, 0.36 if i % 2 == 0 else 0.26)
+    B.arp_pluck(S, 20, YAK_BUILD, B.ARP_16, vel=0.28)
+    S.duck(38.0, 42.0, depth=0.15, tau=0.11)
+
+    # ---- bars 22-25: chorus 2 (the proof): the same pads, a third-below harmony under the hook, a fuller pluck arp
+    S.crash(42.0, 0.3)
+    S.crash(46.0, 0.27)
+    _yak_groove(S, 22, 4, 1.0, drop=True)
+    _yak_pads(S, 22, CHORUS_B, cutoff=2100.0, vel=0.95)
+    _yak_pads(S, 22, CHORUS_B, cutoff=1800.0, vel=0.4, atk=0.1, voicing="sw")
+    B.bass_pattern(S, 22, CHORUS_B, B.BASS_OFFBEAT_B, "sub", 1.05)
+    _yak_lead(S, 22, "turn", vel=0.7)
+    _yak_harmony(S, 22, "turn", vel=0.35)
+    B.arp_pluck(S, 22, CHORUS_B, B.ARP_UP, vel=0.62)
+    S.duck(42.0, 50.0, depth=0.204, tau=0.12)
+
+    # ---- bars 26-29: outro (the end card): the logo lands on the cut (design 49), a held Aadd9 and a soft groove, then
+    # a plagal Dadd9 -> Aadd9 under the master fade. The chords and the bass dip under the logo and come back over 1.5 s.
+    S.logo(50.0, motif="yak")
+    S.crash(50.0, 0.3)
+    S.chord(50.0, 4.0, "Aadd9", "pad", vel=0.9, cutoff=2100.0, atk=0.2, rel=1.2)
+    S.chord(50.0, 4.0, "Aadd9", "pad", vel=0.4, cutoff=1800.0, atk=0.3, rel=1.2, voicing="sw")
+    S.chord(54.0, 2.0, "Dadd9", "pad", vel=0.8, cutoff=2000.0, atk=0.3, rel=1.0)
+    S.chord(56.0, 2.0, "Aadd9", "pad", vel=0.8, cutoff=2000.0, atk=0.3, rel=1.8)
+    S.bass(50.0, 3.8, 33, "sub", vel=0.8)
+    S.bass(54.0, 1.9, 38, "sub", vel=0.7)
+    S.bass(56.0, 1.9, 33, "sub", vel=0.7)
+    for b in (26, 27):
+        S.kick(tb(b, 0), 0.6, "soft")
+        S.kick(tb(b, 8), 0.5, "soft")
+        S.rim(tb(b, 12), 0.3)
+    for i in range(16):
+        S.hatC(tb(26, 2 * i), 0.3 - 0.01 * i)
+    B.arp_pluck(S, 26, ["Aadd9", "Aadd9"], B.ARP_SPARSE, vel=0.3)
+    S.duck(50.0, 54.0, depth=0.15, tau=0.12)
+    S.set_auto("chords", "gain", [(49.9, 0.0), (50.1, -3.0), (51.0, -3.0), (52.5, 0.0)])
+    S.set_auto("bass", "gain", [(49.9, 0.0), (50.1, -1.5), (51.0, -1.5), (52.5, 0.0)])
+    S.set_auto("logo", "gain", [(49.9, 0.0), (50.0, 1.5), (51.5, 1.5), (51.65, 0.0)])
+
+    # ---- the level plan: 6 dB in all, no step up of more than 2.5 dB. No segment after 54.0: the trim holds, so the
+    # chord fades out naturally under the master fade.
+    S.plan((0.0, 2.0, -6.0), (2.0, 4.0, -5.0),
+           (4.0, 4.5, -2.5), (4.5, 6.0, -3.0), (6.0, 8.0, -4.0),
+           (8.0, 20.0, -3.5), (20.0, 22.0, -3.0),
+           (22.0, 30.0, -1.0),
+           (30.0, 34.0, -3.5), (34.0, 36.0, -3.0), (36.0, 38.0, -2.5),
+           (38.0, 42.0, -2.0),
+           (42.0, 50.0, 0.0),
+           (50.0, 50.5, -0.5), (50.5, 52.0, -1.0), (52.0, 54.0, -3.5))
+    S.air_db = 1.0
+    S.music_trim = -3.0 + 20 * math.log10(0.8)   # the music bed at 80%
+    S.target_lufs = -18.0
+    S.ceiling_db = -2.4
+    S.retime(4 / 3)
+    k = S.time_scale
+    S.cut_span(41.0 * k, 42.0 * k)   # the last 2 beats of the build: chorus 2 lands on the proof cut (design 41)
+    S.foley_from = "yak"
+    S.cuts = []   # yak.foley.json is written in the final picture time; nothing to follow
     return S

@@ -8,7 +8,7 @@ import numpy as np
 from scipy import signal
 
 from engine.dsp import SR
-from .theory import BPM, CHORDS, DISPLAY, LOGO_BLOOM, LOGO_NOTES
+from .theory import BPM, CHORDS, DISPLAY, logo_motif
 
 
 def _r(t):
@@ -39,18 +39,19 @@ def timing(S):
     logo = []
     logo_starts = []
     for e in ev["logo"]:
+        notes, bloom = logo_motif(e)
         if e.get("teaser"):
-            for i, (off, m) in enumerate(LOGO_NOTES[:4]):
-                nxt = LOGO_NOTES[i + 1][0] if i + 1 < len(LOGO_NOTES) else off + 0.25
+            for i, (off, m) in enumerate(notes[:-1]):
+                nxt = notes[i + 1][0]
                 logo.append(dict(t=_r(e["t"] + off), dur=_r(nxt - off), midi=m, teaser=True, index=i))
             continue
         logo_starts.append(_r(e["t"]))
-        for i, (off, m) in enumerate(LOGO_NOTES):
-            last = i == len(LOGO_NOTES) - 1
-            nxt = LOGO_NOTES[i + 1][0] if not last else off + 2.0
+        for i, (off, m) in enumerate(notes):
+            last = i == len(notes) - 1
+            nxt = notes[i + 1][0] if not last else off + 2.0
             logo.append(dict(t=_r(e["t"] + off), dur=_r(nxt - off), midi=m, index=i))
-        for m in LOGO_BLOOM:
-            logo.append(dict(t=_r(e["t"] + LOGO_NOTES[-1][0]), dur=2.0, midi=m, index=4, bloom=True))
+        for m in bloom:
+            logo.append(dict(t=_r(e["t"] + notes[-1][0]), dur=2.0, midi=m, index=len(notes) - 1, bloom=True))
     logo.sort(key=lambda x: (x["t"], x["midi"]))
     foley = [{k: v for k, v in e.items()} for e in getattr(S, "foley", [])]
     for e in foley:
