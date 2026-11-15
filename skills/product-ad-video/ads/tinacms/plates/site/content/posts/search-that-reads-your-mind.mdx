@@ -1,0 +1,21 @@
+---
+title: Search that reads your mind
+heroImg: /uploads/posts/search-that-reads-your-mind.jpg
+excerpt: >
+  We rebuilt search from the ground up. It now ranks by meaning, recency and
+  who wrote the note.
+author: content/authors/priya-raman.md
+date: 2026-09-10T09:00:00.000Z
+tags:
+  - tag: content/tags/engineering.mdx
+---
+
+Keyword search is fast and wrong about half the time. For Fieldnote 3.0 we added a second pass that reads the question and the notes together.
+
+## How ranking works
+
+- **Meaning** matters most. A note about "pricing page ownership" matches "who owns pricing".
+- **Recency** breaks ties, because last week's decision beats last year's.
+- **Authors** count a little, so notes from the space owner rank first.
+
+The result is a list you can trust without scrolling.

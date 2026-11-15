@@ -1,0 +1,58 @@
+{
+  "header": {
+    "icon": {
+      "name": "BiNotepad",
+      "color": "purple",
+      "style": "float"
+    },
+    "name": "Fieldnote",
+    "color": "default",
+    "nav": [
+      {
+        "href": "/",
+        "label": "Home"
+      },
+      {
+        "href": "/about",
+        "label": "About"
+      },
+      {
+        "href": "/posts",
+        "label": "Blog"
+      }
+    ]
+  },
+  "footer": {
+    "social": [
+      {
+        "icon": {
+          "name": "FaLinkedin"
+        },
+        "url": "https://www.linkedin.com/company/fieldnote-example"
+      },
+      {
+        "icon": {
+          "name": "FaGithub"
+        },
+        "url": "https://github.com/fieldnote-example"
+      },
+      {
+        "icon": {
+          "name": "FaYoutube"
+        },
+        "url": "https://www.youtube.com/@fieldnote-example"
+      },
+      {
+        "icon": {
+          "name": "FaXTwitter"
+        },
+        "url": "https://x.com/fieldnote-example"
+      }
+    ]
+  },
+  "theme": {
+    "color": "blue",
+    "font": "sans",
+    "darkMode": "light"
+  }
+}

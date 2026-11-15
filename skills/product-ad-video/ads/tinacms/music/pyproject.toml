@@ -1,0 +1,16 @@
+[project]
+name = "tinacms-mv-music"
+version = "1.0.0"
+description = "Original instrumental ad music for TinaCMS, synthesized from code (no music samples; recorded sound effects: 1 CC0, 4 from SSW TV)"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "matplotlib>=3.9",
+    "numba>=0.60",
+    "numpy>=2.0",
+    "pyloudnorm>=0.1.1",
+    "scipy>=1.13",
+    "soundfile>=0.12",
+]
+
+[tool.uv]
+package = false

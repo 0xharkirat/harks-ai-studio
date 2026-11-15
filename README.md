@@ -125,8 +125,14 @@ It follows the TinaCMS anthem, which passed review after 8 rounds.
 make an ad video for <product>
 ```
 
-The skill needs its video engine, which is not in this repo yet.
-Until the engine ships here, the skill works only on my Mac.
+The engine ships in the skill: [`skills/product-ad-video/ads/tinacms`](skills/product-ad-video/ads/tinacms) is the TinaCMS film, with its scenes, music code and docs.
+New ads go next to it in `ads/<product>`.
+It needs Node 22 with pnpm, Python through `uv`, ffmpeg, and Google Chrome.
+
+Some files are not in git:
+
+- The rendered music and the UI captures of the TinaCMS film are big, so you make them again: see the skill's step 0.
+- SSW TV's sound effects are SSW internal assets. SSW staff cut them from the SSW TV originals with `skills/product-ad-video/scripts/ssw-sounds.sh`. Everyone else gets synthesized stand-ins.
 
 ## Reference
 

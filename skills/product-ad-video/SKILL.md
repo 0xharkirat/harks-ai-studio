@@ -10,7 +10,10 @@ It has kinetic words, the real product UI, 2 cartoon characters, a mascot, music
 The reference is the TinaCMS anthem v2 (`TinaCMS-Anthem-v2-76s-16x9`).
 It passed on 2026-11-12 after 8 review rounds.
 
-The engine and the reference film are in `REF=/Users/hark/ssw/tinacms.workspace/tinacms-mv`, a local git repo with no remote.
+This skill's folder holds the engine and the reference film.
+`SKILL` is the skill's base directory (Claude Code shows it when the skill loads; in a git clone it is `skills/product-ad-video`).
+`REF=$SKILL/ads/tinacms` is the TinaCMS film: the engine, its 9 scenes, the music code, the docs, and the brand files.
+New ads go in `ADS=${AD_VIDEO_STUDIO:-$SKILL/ads}`, 1 folder per product. A plugin update replaces the plugin folder, so in a plugin install set `AD_VIDEO_STUDIO=~/ad-video-studio/ads`.
 Read these files before you start:
 
 - [`references/review-lessons.md`](references/review-lessons.md): what each review round taught. Apply it to the first draft, so that no reviewer must say it again.
@@ -26,10 +29,19 @@ For TinaCMS itself, also read `$REF/docs/cuts/anthem.md`: the passed script with
 - Use no ElevenLabs credits, no AI music and no stock music. The music is code. A recorded sound effect is CC0 or an SSW TV asset.
 - Use the official logo and mascot files. Never redraw or recolour them.
 - When the film claims a feature, show the real product UI, captured from a running copy.
-- Start each render with `taskpolicy -b` and 4 workers or fewer. Ask Hark before a render that runs over 10 min or repeats more than 2 times. Check a job for a stall at 10 min.
+- Use 4 render workers or fewer. On macOS, start each render with `taskpolicy -b`, so it stays on the efficiency cores. Ask Hark before a render that runs over 10 min or repeats more than 2 times. Check a job for a stall at 10 min.
 - Times for a 76 s film on Hark's MacBook: the music about 1 min, a review draft about 7 min, the master about 15 min.
 - Never send the live browser preview for review. It drops frames in heavy scenes, and Hark reads that as glitches.
-- Commit each round locally. Push only when Hark says so, as `~/AGENTS.md` sets.
+- Commit each round locally. Push only when the user says so.
+
+## 0. Set up the machine (once)
+
+1. Install Node 22 with pnpm, Python through `uv`, ffmpeg, Dart (for the captions), and Google Chrome (the renders drive it).
+2. For SSW work, get the SSW TV originals from the SSW TV SharePoint site (General / 06-sswtv-assets / SSWTV-SFX-assets), and run `$SKILL/scripts/ssw-sounds.sh <their folder>`. It cuts the pop, bubble, click and typing sounds into `~/.config/product-ad-video/sfx/sswtv/`. These are SSW internal files, so they never go into git.
+3. Without the SSW sounds, the engine plays synthesized stand-ins and prints a warning for each missing file.
+4. To render the TinaCMS film, make its big outputs first. They are not in git:
+   - the music: `cd $REF/music && uv sync && uv run python src/render.py` (about 2 min for all cues);
+   - the UI captures: follow `$REF/plates/README.md`.
 
 ## 1. Research the brief
 
@@ -57,8 +69,8 @@ Done when each colour, font, string and number has a source.
 
 ## 2. Make the project
 
-1. Make a new folder beside `$REF`: `<product>-mv`. Start a git repo in it.
-2. Copy the paths in "The copy list" of the engine notes. The rest of the 364 MB repo is TinaCMS content.
+1. Make a new folder `$ADS/<product>`. In a git clone of harks-ai-studio, the studio repo holds it, so start no new repo.
+2. Copy the paths in "The copy list" of the engine notes from `$REF`. The rest of `$REF` is TinaCMS content.
 3. Change the brand files as "The brand files" in the engine notes says. Keep every export name and every key of `C`.
 4. Put the product's official logos, mascot art and font files in `assets/`.
 5. Find the demo text in the scenes, as "Demo text in the scenes" in the engine notes says. Replace it in `title/card.ts` now, because the work cut shows that page. Plan the rest for step 8.
@@ -129,6 +141,7 @@ Make them 3D cartoon characters in the mascot's style. Hark picked that style fo
 1. Ask Hark for the style with the question dialog. Put the 3D cartoon first, as the recommended option.
 2. Draw 1 base image per character with Codex image generation, with the mascot art as the style reference:
    `/Applications/ChatGPT.app/Contents/Resources/codex-cli/bin/codex exec --skip-git-repo-check -s workspace-write -C <out dir> -i <mascot.png> -- "<prompt>"`
+   That is the Codex of the macOS ChatGPT app. Elsewhere, use any Codex CLI with image generation, or another image model that edits an image from a reference.
 3. Make each pose as an edit of the base image, so the face, clothes and framing stay the same.
 4. Make 3 strips with 2 poses each. The scenes change the pose on story moments.
    - The developer: typing, then a thumbs-up.
@@ -160,7 +173,7 @@ If a reviewer says that the music is too intense, render 2 calmer versions and l
 Write the sounds in `music/cues/<cue>.foley.json`, in the format of "The foley file" in the engine notes.
 
 1. Put a pop on each pop-up and typing on each typing run. Put a click on each click that the cursor makes on screen. In the passed film, these are the mascot's answer, the fields in the editor, Save, and Copy. They are the milestone clicks of the SSW rule. A plain cursor move gets no sound.
-2. For SSW work, use the SSW TV sounds in `music/assets/sfx/sswtv/`: `pop.wav`, `click.wav` and `typing.wav`. They come from the SSW TV SharePoint site, General / 06-sswtv-assets / SSWTV-SFX-assets. The passed film does not use `bubble.wav`.
+2. For SSW work, use the SSW TV sounds from step 0: `sswtv/pop.wav`, `sswtv/click.wav` and `sswtv/typing.wav` in the foley file. The engine finds them in the user's sound folder. The passed film does not use `sswtv/bubble.wav`.
 3. Give the chat requests the same pop as the character cards. Start each typing slice on a keystroke.
 4. Use the game-style sounds in code. Play `happy` (a "level up") for a happy character, and `magic` (a sweep) when the mascot helps.
 5. For a voice sound, such as a scream, render 3 or 4 CC0 options. Recommend 1, and let Hark pick.

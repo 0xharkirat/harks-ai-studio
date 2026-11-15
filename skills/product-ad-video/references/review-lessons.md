@@ -3,7 +3,7 @@
 The anthem v2 passed after 8 review rounds, from 2026-10-26 to 2026-11-12.
 Each rule below comes from a review note.
 Apply all of them to the first draft of a new film.
-The full notes and changes are in `/Users/hark/ssw/tinacms.workspace/tinacms-mv/docs/cuts/anthem.md`.
+The full notes and changes are in `ads/tinacms/docs/cuts/anthem.md` in this skill's folder.
 
 ## Pace
 

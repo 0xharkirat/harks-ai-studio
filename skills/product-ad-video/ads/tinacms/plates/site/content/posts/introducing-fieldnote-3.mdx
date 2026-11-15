@@ -1,0 +1,52 @@
+---
+title: Introducing Fieldnote 3.0
+heroImg: /uploads/posts/introducing-fieldnote-3.jpg
+excerpt: >
+  Shared spaces, offline mode and a search that finally finds the thing you
+  meant. Here is what changed in Fieldnote 3.0 and why we built it.
+author: content/authors/maya-okafor.md
+date: 2026-10-06T09:00:00.000Z
+tags:
+  - tag: content/tags/product.mdx
+---
+
+Fieldnote 3.0 is the biggest release since we started. We spent a year watching how teams write things down, and three problems came up again and again: notes get lost, notes get stale, and notes are not there when the wifi is.
+
+## What is new
+
+Version 3.0 changes how a team works with notes, not just how one person writes them.
+
+- **Shared spaces** keep every note for a project in one place, with clear owners.
+- **Offline mode** lets you write on a plane and sync when you land.
+- **A calmer sidebar** puts the pinned notes first and hides the rest.
+- **Smarter search** understands the question you typed, not only the keywords.
+
+![A soft gradient that matches the new Fieldnote look](/uploads/posts/introducing-fieldnote-3.jpg)
+
+## Search that reads your mind
+
+Type a question like "who owns the pricing page" and Fieldnote finds the note that answers it. You can also call the search from code. Here is a short example that finds notes in one space:
+
+```ts
+import { createClient } from "@fieldnote/sdk";
+
+const fieldnote = createClient({ workspace: "larkspur" });
+
+const notes = await fieldnote.search({
+  query: "who owns the pricing page",
+  space: "product",
+  limit: 5,
+});
+
+console.log(notes.map((note) => note.title));
+```
+
+## Why we built it
+
+> A note that nobody can find is the same as a note that was never written.
+
+We wrote shared spaces so that **the right note is always one search away**, even for the new teammate who joined this morning.
+
+## Try it today
+
+Fieldnote 3.0 is live for every workspace. Open the app, press the new note button and start writing.

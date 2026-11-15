@@ -1,6 +1,6 @@
 # Engine notes
 
-These are facts about the engine in `REF=/Users/hark/ssw/tinacms.workspace/tinacms-mv` that the skill's steps need.
+These are facts about the engine in `REF` (the skill's `ads/tinacms` folder) that the skill's steps need.
 I checked each one against the code on 2026-11-15.
 
 ## Contents
@@ -43,8 +43,7 @@ Copy these paths from `$REF` into the new project:
 - For TinaCMS only: `assets/brand/`, `assets/fonts/` and `assets/llama/`. They hold every file that the brand code expects, the white llama and the 4 reaction heads too.
 - `music/`: `pyproject.toml`, `uv.lock`, `.python-version`, `.gitignore`, `src/render.py`, `src/engine/`, `src/song/`.
 - `music/cues/anthem3.foley.json`: the passed film's sound list, as an example of the format.
-- `music/assets/sfx/README.md` and `scream-comical.wav` (CC0).
-- `music/assets/sfx/sswtv/`: only for SSW work.
+- `music/assets/sfx/README.md` and `scream-comical.wav` (CC0). The SSW TV sounds are not in `$REF`: they live in the user's sound folder (see "The foley file").
 - `plates/capture/` and `plates/README.md`: an example of UI capture.
 - `assets/characters/build.sh`.
 - `.gitignore`.
@@ -203,7 +202,13 @@ Write a new cue with the same choices from the start:
 - Each event has `t`, `type` and `vel`. It can also have `pan` (-1 to 1), `duck` (the dB that the music steps back under it) and `hold`.
 - The types are `key`, `space`, `click`, `enter`, `thud`, `pop`, `ping`, `blip`, `tick`, `whoosh`, `sample`, `happy`, `magic` and `bubble`.
 - The aliases are `error` (thud), `typing` and `keystroke` (key), `mouse` (click), `commit` (ping), `return` and `clunk` (enter), `swoosh` and `slide` (whoosh).
-- A `sample` plays a file in `music/assets/sfx/`, with `offset` (seconds into the file), `span` (design seconds) and `gain` (dB).
+- A `sample` plays a recording, with `offset` (seconds into the file), `span` (design seconds) and `gain` (dB). The engine looks for the file in this order:
+  1. the project's `music/assets/sfx/<file>` (the CC0 files);
+  2. `$AD_VIDEO_SFX_DIR/<file>`, or `~/.config/product-ad-video/sfx/<file>` when that variable is not set (the SSW TV files, from `scripts/ssw-sounds.sh`).
+- When the file is missing, the engine prints 1 warning per file and plays a synthesized stand-in, chosen by a word in the file name:
+  - "pop", "click" or "bubble": the synthesized sound of that name;
+  - "typing": synthesized keystrokes over the span;
+  - any other name: no sound.
 - The loader multiplies each time by `S.time_scale`.
 - After a `cut_span`, the loader also moves each later event earlier by the cut (`apply_cuts` with `S.cuts`). The passed cue writes its foley in the final picture time and sets `S.cuts = []` after its cuts, so nothing moves twice. Do the same: write each time as the picture shows it, and clear `S.cuts`.
 
