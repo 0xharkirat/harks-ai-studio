@@ -19,6 +19,50 @@ FINAL is the ElevenLabs clone: billed, and used once, after the user says the dr
 To voice one line outside a video in the free local voice, run `local-voice/speak.sh "text" out.wav` (`local-voice/README.md`, "Voice one line from any agent").
 On "test pass" for a PBI whose video is already rendered, follow [`UPLOAD.md`](UPLOAD.md) in place of the steps below.
 
+
+## Learning loop
+
+Before step 0, load prior lessons and list any videos still waiting on Hark:
+
+```sh
+skill-lesson top --skill done-video
+skill-lesson pending-list --skill done-video
+```
+
+Treat each printed hypothesis as a constraint for this video.
+If `pending-list` shows rows, remind Hark those still need a verdict; never invent an accept.
+A check only counts on the current commit.
+Do not start adversarial review loops from a lesson; one review pass plus a render that passes step 7 is enough.
+
+After step 8 (Deliver), run:
+
+```sh
+skill-lesson pending --skill done-video --video NN-short-name --version vN
+```
+
+Ask Hark: accept, or needs changes with his words.
+On accept:
+
+```sh
+skill-lesson append --skill done-video \
+  --id "done-video:NN-short-name:vN:accepted" \
+  --verdict accepted --video NN-short-name --version vN --source manual
+```
+
+On needs changes:
+
+```sh
+skill-lesson append --skill done-video \
+  --id "done-video:NN-short-name:vN:needs-changes" \
+  --verdict needs-changes --video NN-short-name --version vN \
+  --feedback "<his words>" \
+  --hypothesis "If the next video risks the same issue, do <concrete change> first."
+```
+
+A successful append clears the matching pending file.
+Lessons are local files only; Hark commits `~/.agents/lessons/done-video/lessons.jsonl` (and its mirror) himself.
+The full protocol is the `skill-lessons` skill.
+
 ## 0. Preflight
 
 - `scripts/setup-local-voice.sh --check` prints nothing; if not, run `scripts/setup-local-voice.sh` once (it ends with `Ready:`).
