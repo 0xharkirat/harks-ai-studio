@@ -1,0 +1,12 @@
+node_modules/
+.DS_Store
+*.log
+/out/
+mv/dist/
+
+# Big outputs that the scripts make again: the music (music/src/render.py) and the UI captures (plates/capture).
+/music/out/
+/plates/out/
+
+# SSW TV sounds are SSW internal assets. Keep them in ~/.config/product-ad-video/sfx/ (scripts/ssw-sounds.sh), never in git.
+/music/assets/sfx/sswtv/

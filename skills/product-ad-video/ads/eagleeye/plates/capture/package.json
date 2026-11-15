@@ -1,0 +1,12 @@
+{
+  "name": "tinacms-mv-plates-capture",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "capture": "node capture.mjs"
+  },
+  "devDependencies": {
+    "playwright": "^1.64.0",
+    "sharp": "^0.35.5"
+  }
+}
