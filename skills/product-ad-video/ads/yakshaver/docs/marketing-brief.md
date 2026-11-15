@@ -113,7 +113,7 @@ Check the shave count again on the day of the master.
 - A time number ("30 seconds", "90%"). Say "in seconds".
 - Jira or Zendesk on screen (Anywhere only, and the roadmap disagrees).
 - A native phone app.
-- Real staff names on demo cards. Use the made-up demo brand "Tidewell" and roles.
+- Real staff names on demo cards. Use roles, and the Northwind365 demo site.
 
 ## Ad platform rules
 
@@ -130,3 +130,14 @@ From the TinaCMS brief (`../tinacms/docs/marketing-brief.md`), unchanged:
 - The real UI comes from the DEMO widget and YakShaver Anywhere.
 - The end-card button says "Try it now".
 - The 2 people are 3D cartoon characters in Jack's style.
+
+## The demo site (Hark, 2026-11-15)
+
+The bug in the film lives on **northwind365.com**, SSW's public demo site for its Clean Architecture template (repo `SSWConsulting/Northwind365.Website`, last change 2024-11-28).
+It has 2 real defects on 2026-11-15, so the demo needs no fake bug:
+
+1. In "Where can I learn more about Clean Architecture?", the ".NET Template" button is solid red, but "Rules", "Training" and "Resources" are outlined, with underlined text.
+2. The footer says "© Copyright 2024".
+
+The recording shows both, and the narration asks for both fixes.
+The shave goes to a private demo repo, so it makes no issue in an SSW repo.

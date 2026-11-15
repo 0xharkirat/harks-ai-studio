@@ -28,7 +28,7 @@ Hark agreed the words on 2026-11-15, with "everyone else" as the reporter audien
 
 - The YakShaver logo springs in on the cut, on the first note of the sonic logo.
 - "The perfect *PBI*. In seconds." comes in word by word.
-- The faded Tidewell page sits behind it: this is the site with the bug.
+- The faded Northwind365 page sits behind it: this is the site with the bug.
 - The logo flies to the top-left corner (80%).
 
 ### 3. `problem` (8-22)
@@ -48,7 +48,7 @@ Hark agreed the words on 2026-11-15, with "everyone else" as the reporter audien
 
 The first chorus drop. Real UI from a YakShaver Anywhere shave.
 
-- "See it." The recorder records the Tidewell bug. The spoken words appear as a transcript.
+- "See it." The recorder records the Northwind365 bug. The spoken words appear as a transcript.
 - "Shave it." The real workflow stages tick to done, 1 per beat.
 - "Solve it." "Processing complete", with the scissors confetti. The reporter card: a smile, then a fist pump.
 

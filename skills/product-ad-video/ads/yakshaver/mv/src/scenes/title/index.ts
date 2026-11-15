@@ -9,7 +9,7 @@ import { FONT } from '../../brand/fonts';
 import { C } from '../../brand/tokens';
 import { logo, LOGO_ASPECT } from '../../brand/logo';
 import { DOG, type DogCorner } from '../dog';
-import { pageCard } from './card';
+import { loadPageCard, pageCard } from './card';
 
 export interface TitleProps {
   line?: string;
@@ -45,6 +45,7 @@ const GLYPHS = ['#', '**', '---', '- ', '>', '![ ]( )', '[ ]( )', '##', '*'];
 const title: SceneDef<TitleProps> = {
   id: 'title',
   async setup({ root, W, H, portrait }, props) {
+    await loadPageCard();
     const bg = new WashBg(root, W, H, { base: '#fff', strength: 1.15 });
     const bloom = box({ inset: '0', background: '#fff' });
     root.append(bloom);

@@ -17,7 +17,7 @@ The scene script is `docs/cuts/anthem.md`.
 
 - The developer's world is dark: the site greys `#222222` and `#131313`, code, the GitHub issue.
 - Everyone else's world is light: off-white with soft blobs of the YakShaver gradient.
-  It holds the made-up "Tidewell" travel site, where the bug lives, and the YakShaver recorder.
+  It holds northwind365.com, SSW's public demo site, where the bug lives, and the YakShaver recorder.
 - The film switches between them to show whose world each scene is.
 
 ## The cast

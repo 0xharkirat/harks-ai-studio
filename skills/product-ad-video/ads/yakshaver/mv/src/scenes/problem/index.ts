@@ -13,6 +13,7 @@ import { CharacterCard, loadSprite, poseAt } from '../../ui/character';
 import { FONT } from '../../brand/fonts';
 import { C, SHADOW, SYN } from '../../brand/tokens';
 import { BAD, MD_LINES, RawWindow, SEL, clickRipple, ghostCard, indentOf, speechBubble } from './parts';
+import { loadPageCard } from '../title/card';
 
 export interface ProblemProps {
   /** The headline swaps to "Content editors? Not so much." and the raw page slides in (default 2.5). */
@@ -42,6 +43,7 @@ const BUBBLES = [
 const problem: SceneDef<ProblemProps> = {
   id: 'problem',
   async setup({ root, W, H, portrait }, props) {
+    await loadPageCard();
     const fromOpen = props.fromOpen ?? false;
     const editorsAt = props.editorsAt ?? 2.5;
     const bubblesAt = props.bubblesAt ?? 4.0;
