@@ -1,6 +1,6 @@
 {
   "name": "harks-ai-studio",
-  "description": "Make a narrated SSW done video in your own voice clone: a free local draft voice for every edit, then your ElevenLabs clone for the final. Rendered with Remotion.",
+  "description": "Make a narrated SSW done video in your own voice clone: a free local draft voice for every edit, then your ElevenLabs clone for the final. Rendered with Remotion. Also: a music-driven ad film for any product, built in code (beta).",
   "author": {
     "name": "Harkirat Singh",
     "url": "https://github.com/0xharkirat"
@@ -8,5 +8,5 @@
   "homepage": "https://github.com/0xharkirat/harks-ai-studio",
   "repository": "https://github.com/0xharkirat/harks-ai-studio",
   "license": "MIT",
-  "keywords": ["video", "done-video", "remotion", "elevenlabs", "voice-clone", "tts", "ssw"]
+  "keywords": ["video", "done-video", "remotion", "elevenlabs", "voice-clone", "tts", "ssw", "ad-video", "motion-graphics"]
 }

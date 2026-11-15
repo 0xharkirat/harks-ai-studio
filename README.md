@@ -115,6 +115,19 @@ Later updates copy only the changed scripts, and they never touch your videos, v
 
 A git clone is its own studio: the videos go in `skills/done-video/videos/`.
 
+## Ad films (beta)
+
+The plugin has a second skill: [`product-ad-video`](skills/product-ad-video/SKILL.md).
+It makes a 60 to 80 s ad film with no voice: kinetic words, the real product UI, 2 cartoon characters, and music made in code.
+It follows the TinaCMS anthem, which passed review after 8 rounds.
+
+```text
+make an ad video for <product>
+```
+
+The skill needs its video engine, which is not in this repo yet.
+Until the engine ships here, the skill works only on my Mac.
+
 ## Reference
 
 - [Studio reference](skills/done-video/README.md): voices, subtitles, Shorts, the puppet, components, and assets.
