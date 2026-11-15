@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>YakShaver MV</title>
+    <style>
+      html, body { margin: 0; height: 100%; background: #0b0b10; overflow: hidden; }
+      #viewport { position: absolute; inset: 0; display: grid; place-items: center; }
+      #stage { position: relative; overflow: hidden; transform-origin: 0 0; background: #000; }
+      body.render #viewport { display: block; }
+      #hud { position: fixed; left: 12px; bottom: 10px; color: #ccc; font: 12px ui-monospace, monospace; z-index: 10; text-shadow: 0 1px 2px #000; }
+      #scrub { position: fixed; left: 0; right: 0; bottom: 0; height: 4px; background: #222; z-index: 10; cursor: pointer; }
+      #scrub > div { height: 100%; background: #ec4815; width: 0; }
+      body.render #hud, body.render #scrub { display: none; }
+    </style>
+  </head>
+  <body>
+    <div id="viewport"><div id="stage"></div></div>
+    <div id="hud"></div>
+    <div id="scrub"><div></div></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
