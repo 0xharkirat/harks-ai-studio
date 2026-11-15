@@ -34,27 +34,37 @@ If `pending-list` shows rows, remind Hark those still need a verdict; never inve
 A check only counts on the current commit.
 Do not start adversarial review loops from a lesson; one review pass plus a render that passes step 7 is enough.
 
-After step 8 (Deliver), run:
+In the commands below, `VER` is `draft-vN` for a render in the local voice and `final-vN` for an ElevenLabs render, matching the file name.
+`skill-lesson` rejects a bare `vN`, so a draft verdict and a final verdict never share an id.
+
+After step 8 (Deliver), log what the render cost, then mark it pending:
 
 ```sh
-skill-lesson pending --skill done-video --video NN-short-name --version vN
+SESSION=$(find ~/.claude/projects -name '*.jsonl' -mtime -2 -exec grep -lE "\"cwd\":\"[^\"]*/videos/NN-short-name" {} + | xargs ls -t | head -1)
+skill-lesson metrics add --skill done-video --video NN-short-name --version VER \
+  --session "$SESSION" --script videos/NN-short-name/project/script.json \
+  --video-dir videos/NN-short-name --render-s <seconds the render took>
+skill-lesson pending --skill done-video --video NN-short-name --version VER
 ```
+
+For a final render, also pass `--el-credits <N>` from the `credits charged` line of `tts.dart`, and `--rerolls <N>`.
+`skill-lesson metrics report --skill done-video` sums the cost per video.
 
 Ask Hark: accept, or needs changes with his words.
 On accept:
 
 ```sh
 skill-lesson append --skill done-video \
-  --id "done-video:NN-short-name:vN:accepted" \
-  --verdict accepted --video NN-short-name --version vN --source manual
+  --id "done-video:NN-short-name:VER:accepted" \
+  --verdict accepted --video NN-short-name --version VER --source manual
 ```
 
 On needs changes:
 
 ```sh
 skill-lesson append --skill done-video \
-  --id "done-video:NN-short-name:vN:needs-changes" \
-  --verdict needs-changes --video NN-short-name --version vN \
+  --id "done-video:NN-short-name:VER:needs-changes" \
+  --verdict needs-changes --video NN-short-name --version VER \
   --feedback "<his words>" \
   --hypothesis "If the next video risks the same issue, do <concrete change> first."
 ```
