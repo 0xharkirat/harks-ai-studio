@@ -18,6 +18,6 @@ build() {
   echo "$name.webp: $*"
 }
 build dev dev-1 dev-3
-build editor-stressed editor-base stressed-2
+build editor-stressed editor-frown stressed-2
 build editor-happy happy-1 happy-2
 rm -rf $tmp
